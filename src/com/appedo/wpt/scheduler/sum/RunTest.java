@@ -133,6 +133,7 @@ public class RunTest extends Thread {
 				
 				// preparation of sum_har_results table
 				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode);
+				sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
 				if( runTestCode != null){
 					int statusCheckStatus = 0;

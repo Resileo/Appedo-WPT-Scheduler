@@ -162,4 +162,20 @@ public class SUMManager {
 			sumdbi = null;
 		}
 	}
+	
+	public void updateSumTestLastRunDetail(long testId) {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			sumdbi.updateSumTestLastRunDetail(con, testId);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally {
+			DataBaseManager.close(con);
+			con = null;
+			sumdbi = null;
+		}
+	}
 }

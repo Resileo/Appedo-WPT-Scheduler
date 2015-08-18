@@ -45,7 +45,7 @@ public class SUMDBI {
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.os_browser_id = os.dob_id ")
+					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
 					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -597,7 +597,7 @@ public class SUMDBI {
 	}
 	
 	public void updateHarFileNameInTable(Connection con, long testId, String runTestCode, String harFileName) {
-		PreparedStatement pstmt = null, stmt = null;
+		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET harfilename = ?, received_on = now() WHERE test_id = ? AND run_test_code = ? ");
@@ -607,11 +607,23 @@ public class SUMDBI {
 			pstmt.setString(3, runTestCode);
 			pstmt.executeUpdate();
 			
-			sbQuery.setLength(0);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}
+	}
+	
+	public void updateSumTestLastRunDetail(Connection con, long testId){
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		try {
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
-			stmt = con.prepareStatement(sbQuery.toString());
-			stmt.setLong(1, testId);
-			stmt.executeUpdate();
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.setLong(1, testId);
+			pstmt.executeUpdate();
 			
 		} catch (Exception e) {
 			LogManager.errorLog(e);
