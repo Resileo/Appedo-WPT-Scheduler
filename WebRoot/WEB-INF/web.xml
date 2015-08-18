@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>Appedo_WPT_Scheduler</display-name>
+  
+	<context-param>
+		<param-name>NewMIDlet-Version</param-name>
+		<param-value>3.0.01</param-value>
+	</context-param>
+	<context-param>
+		<param-name>VersionLastUpdate</param-name>
+		<param-value>2015-08-18 11:30</param-value>
+	</context-param>
+  
+  
+  <servlet>
+		<servlet-name>InitServlet</servlet-name>
+		<servlet-class>com.appedo.wpt.scheduler.servlet.InitServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	
+	<context-param>
+		<description>Constant file properties</description>
+		<param-name>CONSTANTS_PROPERTIES_FILE_PATH</param-name>
+		<param-value>/WEB-INF/classes/com/appedo/wpt/scheduler/resource/config.properties</param-value>
+	</context-param>
+	
+	<context-param>
+		<description>log4j file properties</description>
+		<param-name>LOG4J_PROPERTIES_FILE_PATH</param-name>
+		<param-value>/WEB-INF/classes/com/appedo/wpt/scheduler/resource/log4j.properties</param-value>
+	</context-param>
+	
+	<servlet>
+		<servlet-name>AddEditTest</servlet-name>
+		<servlet-class>com.appedo.wpt.scheduler.servlet.AddEditSUMTest</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AddEditTest</servlet-name>
+		<url-pattern>/addEditEnterprise</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<description>This servlet sends file to client</description>
+		<servlet-name>DownloadFileServlet</servlet-name>
+		<servlet-class>com.appedo.wpt.scheduler.servlet.DownloadFileServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DownloadFileServlet</servlet-name>
+		<url-pattern>/downloadFileServlet</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<description>This servlet receives details from client</description>
+		<servlet-name>UpdateAgentDetails</servlet-name>
+		<servlet-class>com.appedo.wpt.scheduler.servlet.UpdateAgentDetails</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>UpdateAgentDetails</servlet-name>
+		<url-pattern>/UpdateAgentDetails</url-pattern>
+	</servlet-mapping>
+	
+	
+	
+	<!-- ========================================================== -->
+	<!-- Listeners -->
+	<!-- ========================================================== -->
+
+	<!-- Listener for the application -->
+	<listener>
+		<listener-class>com.appedo.wpt.scheduler.listener.AppedoSUMSchedulerServletContext</listener-class>
+	</listener>
+	
+	
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>
