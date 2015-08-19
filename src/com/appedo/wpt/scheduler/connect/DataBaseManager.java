@@ -67,7 +67,7 @@ public class DataBaseManager {
 		password	= prop.getProperty("DBPASSWORD");
 		maxActive	= Integer.parseInt(prop.getProperty("MAXACTIVE"));
 		maxWait		= Integer.parseInt(prop.getProperty("MAXWAIT"));
-		autoCommit	= /*Boolean.parseBoolean(prop.getProperty("AUTOCOMMIT"))*/ true;
+		autoCommit	= Boolean.parseBoolean(prop.getProperty("AUTOCOMMIT"));
 	}
 
 	/**
