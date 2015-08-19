@@ -115,13 +115,13 @@ public class SUMManager {
 		return status;
 	}
 
-	public void insertHarTable(long testId, int statusCode, String statusText, String runTestCode) {
+	public void insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
 		try {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
-			sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode);
+			sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {

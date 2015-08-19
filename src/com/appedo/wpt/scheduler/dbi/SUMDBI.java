@@ -554,16 +554,17 @@ public class SUMDBI {
 	}
 
 
-	public void insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode) {
+	public void insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		try {
-			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text) VALUES (?, now(), ?, ?, ?) ");
+			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
+			pstmt.setString(5, location);
 			
 			pstmt.executeUpdate();
 		} catch (Exception e) {

@@ -132,7 +132,7 @@ public class RunTest extends Thread {
 				
 				
 				// preparation of sum_har_results table
-				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode);
+				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
 				sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
 				if( runTestCode != null){
@@ -184,7 +184,7 @@ public class RunTest extends Thread {
 							for(int i=0;i<file.listFiles().length;i++){
 								File f = file.listFiles()[i];
 								sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
-								JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), "rum_"+testBean.getTestId()+"_"+f.getName(), ""+testBean.getTestId());
+								JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
 								if(jo.getBoolean("success")){
 									deleteHar(saveDir+"/"+f.getName());
 								}
