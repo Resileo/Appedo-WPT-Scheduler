@@ -141,13 +141,18 @@ public class SUMDBI {
 
 		Statement stmt = null;
 		ResultSet rs = null;
-		String strQry = null;
+		StringBuilder sbQuery = new StringBuilder();
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
 		
 		try{
-			strQry = "select * from sum_test_master where status="+status+" and test_id = '"+test_id+"' and start_date::DATE <= now()::DATE and end_date::DATE >= now()::DATE order by start_date asc";
+			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+					.append("t.user_id, location, os_name, browser_name from sum_test_master t ")
+					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id left join sum_test_device_os_browser st ")
+					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id where status=")
+					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
+					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
-			rs = stmt.executeQuery(strQry);
+			rs = stmt.executeQuery(sbQuery.toString());
 			rumTestBeans.clear();
 			
 			while (rs.next()) {
@@ -162,7 +167,13 @@ public class SUMDBI {
 				testBean.setTestClassName(rs.getString("testfilename"));
 				testBean.setUserId(Integer.valueOf(rs.getString("user_id")));
 				
-				testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
+				if(rs.getString("os_name")!=null){
+					System.out.println(rs.getString("os_name"));
+					testBean.setLocation(rs.getString("location")+"-"+rs.getString("os_name"));
+				} else {
+					testBean.setLocation(rs.getString("location"));
+				}
+				//testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 				rumTestBeans.add(testBean);
 				// manager.runRUMTests(testBean);
 				
@@ -175,7 +186,7 @@ public class SUMDBI {
 			DataBaseManager.close(stmt);
 			stmt = null;
 			
-			UtilsFactory.clearCollectionHieracy( strQry );
+			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	  return rumTestBeans;
 	}

@@ -63,8 +63,8 @@ public class InitServlet extends HttpServlet {
 			// Loads db config
 			DataBaseManager.doConnectionSetupIfRequired(Constants.APPEDO_CONFIG_FILE_PATH);
 			
-			timerTaskNodeInactive = new NodeTimerTask();
-			timerNodeInactive.schedule(timerTaskNodeInactive, 500, Constants.TIMER_PERIOD * 1000);
+//			timerTaskNodeInactive = new NodeTimerTask();
+//			timerNodeInactive.schedule(timerTaskNodeInactive, 500, Constants.TIMER_PERIOD * 1000);
         	
 			timerTaskSUMScheduler = new SUMSchedulerTimerTask();
 			timerSUMScheduler.schedule(timerTaskSUMScheduler, 150, Constants.SCHEDULE_INTERVAL);
