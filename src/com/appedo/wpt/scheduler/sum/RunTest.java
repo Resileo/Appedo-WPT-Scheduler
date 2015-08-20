@@ -89,10 +89,10 @@ public class RunTest extends Thread {
 			method.addParameter("r", "null");
 			method.addParameter("notify", "null");
 			method.addParameter("pingback", "null");
-			method.addParameter("bwDown", "null");
-			method.addParameter("bwUp", "null");
-			method.addParameter("latency", "null");
-			method.addParameter("plr", "null");
+			method.addParameter("bwDown", testBean.getDownload());
+			method.addParameter("bwUp", testBean.getUpload());
+			method.addParameter("latency", testBean.getLatency());
+			method.addParameter("plr", testBean.getPacketLoss());
 			// method.addParameter("k", "A.8d4413bd13dc1798f286c896d25be969");
 			method.addParameter("k", "33f6b472561edfcf6130b2a65b687104f9ed5d62");
 			method.addParameter("tcpdump", "0");

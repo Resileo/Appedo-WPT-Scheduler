@@ -31,6 +31,11 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private String strTestClassName;
 	private String agentType;
 	private String strLocation;
+	private String connectionName;
+	private String download;
+	private String upload;
+	private String latency;
+	private String packetLoss;
 	
 	private Date dateQueuedOn = null;
 	
@@ -195,5 +200,45 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 
 	public void setLocation(String strLocation) {
 		this.strLocation = strLocation;
+	}
+
+	public String getConnectionName() {
+		return connectionName;
+	}
+
+	public void setConnectionName(String connectionName) {
+		this.connectionName = connectionName;
+	}
+
+	public String getDownload() {
+		return download;
+	}
+
+	public void setDownload(String download) {
+		this.download = download;
+	}
+
+	public String getUpload() {
+		return upload;
+	}
+
+	public void setUpload(String upload) {
+		this.upload = upload;
+	}
+
+	public String getLatency() {
+		return latency;
+	}
+
+	public void setLatency(String latency) {
+		this.latency = latency;
+	}
+
+	public String getPacketLoss() {
+		return packetLoss;
+	}
+
+	public void setPacketLoss(String packetLoss) {
+		this.packetLoss = packetLoss;
 	}
 }

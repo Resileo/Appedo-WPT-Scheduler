@@ -43,8 +43,10 @@ public class SUMDBI {
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
-					.append("t.user_id, location, os_name, browser_name from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id left join sum_test_device_os_browser st ")
+					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
+					.append("t.latency, t.packet_loss, sc.connection_name from sum_test_master t ")
+					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
+					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
 					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
@@ -64,10 +66,27 @@ public class SUMDBI {
 				testBean.setTestType(rs.getString("testtype"));
 				testBean.setTestClassName(rs.getString("testfilename"));
 				testBean.setUserId(Integer.valueOf(rs.getString("user_id")));
+				testBean.setConnectionName(rs.getString("connection_name"));
+				if( rs.getString("download")!= null ) {
+					testBean.setDownload(String.valueOf(rs.getInt("download")));
+				}
+				if( rs.getString("upload")!= null ) {
+					testBean.setUpload(String.valueOf(rs.getInt("upload")));
+				}
+				if( rs.getString("latency")!= null ) {
+					testBean.setLatency(String.valueOf(rs.getInt("latency")));
+				}
+				if( rs.getString("packet_loss")!= null ) {
+					testBean.setPacketLoss(String.valueOf(rs.getInt("packet_loss")));
+				}
 				
-				if(rs.getString("os_name")!=null){
-					System.out.println(rs.getString("os_name"));
-					testBean.setLocation(rs.getString("location")+":"+rs.getString("os_name"));
+				if(rs.getString("browser_name")!=null){
+					System.out.println(rs.getString("browser_name"));
+					if( rs.getString("connection_name")!= null ){
+						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
+					} else {
+						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name"));
+					}
 				} else {
 					testBean.setLocation(rs.getString("location"));
 				}
@@ -146,8 +165,10 @@ public class SUMDBI {
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
-					.append("t.user_id, location, os_name, browser_name from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id left join sum_test_device_os_browser st ")
+					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
+					.append("t.latency, t.packet_loss, sc.connection_name from sum_test_master t ")
+					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
+					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id where status=")
 					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
@@ -166,10 +187,26 @@ public class SUMDBI {
 				testBean.setTestType(rs.getString("testtype"));
 				testBean.setTestClassName(rs.getString("testfilename"));
 				testBean.setUserId(Integer.valueOf(rs.getString("user_id")));
+				if( rs.getString("download")!= null ) {
+					testBean.setDownload(String.valueOf(rs.getInt("download")));
+				}
+				if( rs.getString("upload")!= null ) {
+					testBean.setUpload(String.valueOf(rs.getInt("upload")));
+				}
+				if( rs.getString("latency")!= null ) {
+					testBean.setLatency(String.valueOf(rs.getInt("latency")));
+				}
+				if( rs.getString("packet_loss")!= null ) {
+					testBean.setPacketLoss(String.valueOf(rs.getInt("packet_loss")));
+				}
 				
-				if(rs.getString("os_name")!=null){
-					System.out.println(rs.getString("os_name"));
-					testBean.setLocation(rs.getString("location")+":"+rs.getString("os_name"));
+				if(rs.getString("browser_name")!=null){
+					System.out.println(rs.getString("browser_name"));
+					if( rs.getString("connection_name")!= null ){
+						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
+					} else {
+						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name"));
+					}
 				} else {
 					testBean.setLocation(rs.getString("location"));
 				}
