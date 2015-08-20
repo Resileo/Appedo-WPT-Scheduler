@@ -67,7 +67,7 @@ public class SUMDBI {
 				
 				if(rs.getString("os_name")!=null){
 					System.out.println(rs.getString("os_name"));
-					testBean.setLocation(rs.getString("location")+"-"+rs.getString("os_name"));
+					testBean.setLocation(rs.getString("location")+":"+rs.getString("os_name"));
 				} else {
 					testBean.setLocation(rs.getString("location"));
 				}
@@ -169,7 +169,7 @@ public class SUMDBI {
 				
 				if(rs.getString("os_name")!=null){
 					System.out.println(rs.getString("os_name"));
-					testBean.setLocation(rs.getString("location")+"-"+rs.getString("os_name"));
+					testBean.setLocation(rs.getString("location")+":"+rs.getString("os_name"));
 				} else {
 					testBean.setLocation(rs.getString("location"));
 				}
