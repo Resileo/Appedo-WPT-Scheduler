@@ -75,7 +75,7 @@ public class RunTest extends Thread {
 			method.addParameter("location", strLocation);
 			// method.addParameter("runs", ""+testBean.getRunEveryMinute()); -should be discussed
 			method.addParameter("runs", "1");
-			method.addParameter("fvonly", "0");
+			method.addParameter("fvonly", "1");
 			method.addParameter("domelement", "null");
 			method.addParameter("private", "0");
 			method.addParameter("connections", "0");
@@ -130,7 +130,6 @@ public class RunTest extends Thread {
 					runTestCode = joData.getString("testId");
 				}
 				
-				
 				// preparation of sum_har_results table
 				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
 				sumManager.updateSumTestLastRunDetail(testBean.getTestId());
@@ -169,13 +168,16 @@ public class RunTest extends Thread {
 								JSONObject joData = JSONObject.fromObject(joResponse.get("data"));
 								if( joData.containsKey("average") ){
 									JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
-									JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
-									int repeatLoadTime = 0;
+									int repeatLoadTime = 0, firstLoadTime = 0;
+									if(joAverage.get("firstView") instanceof JSONObject){
+										JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
+										firstLoadTime = joFirstView.getInt("loadTime");
+									} 
 									if(joAverage.get("repeatView") instanceof JSONObject){
 										JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
 										repeatLoadTime = joRepeatView.getInt("loadTime");
 									} 
-									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, joFirstView.getInt("loadTime"), repeatLoadTime );
+									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, firstLoadTime, repeatLoadTime );
 								}
 							}
 						}
@@ -205,14 +207,6 @@ public class RunTest extends Thread {
 			if (statusCode != HttpStatus.SC_OK) {
 				LogManager.infoLog("Method failed: " + method.getStatusLine());
 			}
-			
-			// insert data into sum_har_result_table using get response value -- Done
-			// Loop check status and upadate sum_har_result_table for that run_test_code -- Done
-			// Once status is completed, then get har if result code is either 0 or 99999 (For other result code we need to check the existence of the har) -- Getting value/Unable to get response val
-			// Push har file to har repository as it is done by sum agent before
-			// update sum_har_result table with this filename and location
-			// update loadTime (get using xmlResult API) -- Done
-			
 			
 		} catch (Exception ee) {
 			LogManager.errorLog(ee);
