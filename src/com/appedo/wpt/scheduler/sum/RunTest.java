@@ -170,8 +170,12 @@ public class RunTest extends Thread {
 								if( joData.containsKey("average") ){
 									JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
 									JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
-									JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
-									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, joFirstView.getInt("loadTime"), joRepeatView.getInt("loadTime") );
+									int repeatLoadTime = 0;
+									if(joAverage.get("repeatView") instanceof JSONObject){
+										JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
+										repeatLoadTime = joRepeatView.getInt("loadTime");
+									} 
+									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, joFirstView.getInt("loadTime"), repeatLoadTime );
 								}
 							}
 						}
