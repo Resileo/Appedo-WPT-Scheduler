@@ -35,14 +35,7 @@ public class SUMManager {
 			// To check expiry and MaxMeasurement Count
 			if ( !getTestStatus(testBean) ) {
 				//for (int i = 0; i < alLocations.size(); i++) {
-					// For Checking UTC Time where the agent is installed
-					Calendar d = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-					// Without TimeZone
-					// Calendar d = Calendar.getInstance();
-					d.set(Calendar.HOUR_OF_DAY, 23);
-					d.set(Calendar.MINUTE, 59);
-					d.set(Calendar.SECOND, 59);
-					t = new RunTest(testBean.getLocation(), testBean, d.getTime());
+					t = new RunTest(testBean.getLocation(), testBean);
 					sumTestIdList.add(t);
 					hmThreads.put(testBean.getTestId(), sumTestIdList);
 					t.start();

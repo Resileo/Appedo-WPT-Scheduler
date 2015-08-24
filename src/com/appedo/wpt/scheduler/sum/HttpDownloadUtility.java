@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import com.appedo.wpt.scheduler.manager.LogManager;
  
 /**
  * A utility that downloads a file from a URL.
@@ -22,6 +24,7 @@ public class HttpDownloadUtility {
      */
     public static void downloadFile(String fileURL, String saveDir)
             throws IOException {
+    	long startTime = System.currentTimeMillis();
         URL url = new URL(fileURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         int responseCode = httpConn.getResponseCode();
@@ -72,6 +75,7 @@ public class HttpDownloadUtility {
             inputStream.close();
  
             System.out.println("File downloaded");
+            LogManager.infoLog("downloadFile - Time Taken to Download har file in local: "+(System.currentTimeMillis() - startTime));
         } else {
             System.out.println("No file to download. Server replied HTTP code: " + responseCode);
         }

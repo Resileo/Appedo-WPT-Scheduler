@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Date;
 
 import net.sf.json.JSONObject;
 
@@ -31,7 +30,6 @@ public class RunTest extends Thread {
 	
 	String strLocation;
 	public SUMTestBean testBean;
-	Date expireDate;
 	HttpClient client = null;
 	PostMethod method = null;
 	
@@ -45,10 +43,9 @@ public class RunTest extends Thread {
 	 * @param strUrl
 	 * @throws Throwable
 	 */
-	public RunTest(String strLocation, SUMTestBean testBean, Date date) throws Throwable {
+	public RunTest(String strLocation, SUMTestBean testBean) throws Throwable {
 
 		try {
-			this.expireDate = date;
 			this.testBean = testBean;
 			this.strLocation = strLocation;
 			
@@ -69,6 +66,7 @@ public class RunTest extends Thread {
 			// Pushing test to 70.70 server, get response 
 			client = new HttpClient();
 			// URLEncoder.encode(requestUrl,"UTF-8");
+			LogManager.infoLog("Before Starting Test (runtest.php) for Test Id: "+testBean.getTestId());
 			method = new PostMethod("http://54.237.70.70/runtest.php");
 			method.addParameter("url", testBean.getURL());
 			method.addParameter("label", testBean.getTestName());
@@ -132,10 +130,11 @@ public class RunTest extends Thread {
 				
 				// preparation of sum_har_results table
 				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
-				sumManager.updateSumTestLastRunDetail(testBean.getTestId());
+				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
 				if( runTestCode != null){
 					int statusCheckStatus = 0;
+					int cnt = 1;
 					while(statusCheckStatus != 200){
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
@@ -152,11 +151,14 @@ public class RunTest extends Thread {
 							statusCheckStatus = joResponse.getInt("statusCode");
 							sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, 0, 0);
 						}
+						cnt++;
 					}
+					LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+testBean.getTestId());
 					
 					if( statusCheckStatus == 200 ){
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
+						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId());
 						method = new PostMethod("http://54.237.70.70/jsonResult.php");
 						method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
@@ -181,6 +183,7 @@ public class RunTest extends Thread {
 								}
 							}
 						}
+						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId());
 						String fileURL = "http://54.237.70.70/export.php?bodies=1&pretty=1&test="+runTestCode;
 						String saveDir = Constants.HAR_PATH+testBean.getTestId();
 						HttpDownloadUtility.downloadFile(fileURL, saveDir);
@@ -230,6 +233,7 @@ public class RunTest extends Thread {
 		OutputStream outputStream = null;
 		BufferedReader reader = null;
 		JSONObject joResponse = new JSONObject();
+		long startTime = System.currentTimeMillis();
 		 
 		 try {
 			joResponse.put("success", true);
@@ -288,6 +292,7 @@ public class RunTest extends Thread {
 			 throw t;
 			 
 		 }finally {
+			 LogManager.infoLog("Time Taken to export har file to server: "+(System.currentTimeMillis() - startTime)+" TestId: "+strTestId);
 			 outputStream.close();
 			 inputStream.close();
 			 reader.close();
@@ -297,10 +302,12 @@ public class RunTest extends Thread {
 	
 	public JSONObject deleteHar(String strHarPath) throws Throwable {
 		JSONObject joDeleteResponse = new JSONObject();
+		long startTime = System.currentTimeMillis();
 		File file = new File(strHarPath);
 		try {
 			joDeleteResponse.put("success", true);
 			file.delete();
+			LogManager.infoLog("Time taken to deleteHar: "+(System.currentTimeMillis() - startTime));
 		}catch(Throwable t) {
 			System.out.println("Exception in deleteHar" + t.getMessage());
 			joDeleteResponse.put("success", false);

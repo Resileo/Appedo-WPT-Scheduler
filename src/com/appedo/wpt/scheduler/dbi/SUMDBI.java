@@ -40,6 +40,7 @@ public class SUMDBI {
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
 		// RUMManager manager = new RUMManager();
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
@@ -103,6 +104,7 @@ public class SUMDBI {
 			LogManager.errorLog(ex);
 			throw ex;
 		} finally {
+			LogManager.infoLog("getTestIdDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime));
 			DataBaseManager.close(rs);
 			rs = null;
 			DataBaseManager.close(pstmt);
@@ -443,6 +445,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
 		Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
+		long stTime = System.currentTimeMillis();
 		
 		try {
 			if ( !jsonObject.getString("licLevel").equals("level0") ){
@@ -475,6 +478,7 @@ public class SUMDBI {
 			LogManager.errorLog(e);
 			throw e;
 		} finally {
+			LogManager.infoLog("getMaxMeasurementPerMonth Time Taken - in finally block::: "+(System.currentTimeMillis() - stTime)+" UserId: "+userId);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -492,6 +496,7 @@ public class SUMDBI {
 		Statement stmtUser = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("SELECT license_level FROM usermaster ")
 					.append("WHERE user_id="+userId);
@@ -517,6 +522,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
+			LogManager.infoLog("getUserDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
 			DataBaseManager.close(rstUser);
 			rstUser = null;
 			DataBaseManager.close(stmtUser);
@@ -534,6 +540,7 @@ public class SUMDBI {
 	public void deactivateTest(Connection con, long userId) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		
 		try {
 			sbQuery	.append("update sum_test_master SET status = false ")
@@ -544,6 +551,7 @@ public class SUMDBI {
 		} catch (Throwable t) {
 			LogManager.errorLog(t);
 		} finally {
+			LogManager.infoLog("deactivateTest Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			
@@ -555,6 +563,7 @@ public class SUMDBI {
 		ResultSet rst = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			
 			if( ! licLevel.equals("level0") ) {
@@ -582,6 +591,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("getUserLicenseDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -592,8 +602,9 @@ public class SUMDBI {
 
 
 	public void insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
-		PreparedStatement pstmt = null;
+		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -602,13 +613,21 @@ public class SUMDBI {
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
 			pstmt.setString(5, location);
-			
 			pstmt.executeUpdate();
+			
+			sbQuery.setLength(0);
+			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
+			stmt = con.prepareStatement(sbQuery.toString());
+			stmt.setLong(1, testId);
+			stmt.executeUpdate();
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("insertHarTable & updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
+			DataBaseManager.close(stmt);
+			stmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	}
@@ -617,6 +636,7 @@ public class SUMDBI {
 	public void updateHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET status_code = ?, status_text = ?, pageloadtime = ?, pageloadtime_repeatview = ? WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -639,6 +659,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			// LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -648,6 +669,7 @@ public class SUMDBI {
 	public void updateHarFileNameInTable(Connection con, long testId, String runTestCode, String harFileName) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET harfilename = ?, received_on = now() WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -659,6 +681,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("updateHarFileNameInTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -668,6 +691,7 @@ public class SUMDBI {
 	public void updateSumTestLastRunDetail(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -677,6 +701,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
