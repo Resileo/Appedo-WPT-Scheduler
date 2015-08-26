@@ -36,6 +36,7 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private String upload;
 	private String latency;
 	private String packetLoss;
+	private String repeatView;
 	
 	private Date dateQueuedOn = null;
 	
@@ -240,5 +241,13 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 
 	public void setPacketLoss(String packetLoss) {
 		this.packetLoss = packetLoss;
+	}
+
+	public String getRepeatView() {
+		return repeatView;
+	}
+
+	public void setRepeatView(String repeatView) {
+		this.repeatView = repeatView;
 	}
 }

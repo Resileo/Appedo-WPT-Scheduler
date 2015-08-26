@@ -73,7 +73,7 @@ public class RunTest extends Thread {
 			method.addParameter("location", strLocation);
 			// method.addParameter("runs", ""+testBean.getRunEveryMinute()); -should be discussed
 			method.addParameter("runs", "1");
-			method.addParameter("fvonly", "1");
+			method.addParameter("fvonly", testBean.getRepeatView()); //Set 0 to get Repeatview and 1 for first view alone
 			method.addParameter("domelement", "null");
 			method.addParameter("private", "0");
 			method.addParameter("connections", "0");

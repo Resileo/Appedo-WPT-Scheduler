@@ -44,8 +44,8 @@ public class SUMDBI {
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
-					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
-					.append("t.latency, t.packet_loss, sc.connection_name from sum_test_master t ")
+					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
+					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
@@ -91,6 +91,7 @@ public class SUMDBI {
 				} else {
 					testBean.setLocation(rs.getString("location"));
 				}
+				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
 				
 				// testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 //				HashSet<String> a = new HashSet<String>();
@@ -659,7 +660,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			// LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
