@@ -89,7 +89,7 @@ public class SUMManager {
 				status = true;
 			} else {
 				int maxNodeCount = sumdbi.getMaxMeasurementPerMonth(con, testBean.getUserId(), jsonObject);
-				if ( maxNodeCount >= jsonObject.getInt("max_measurement_per_month") && jsonObject.getInt("max_measurement_per_month") != -1 ){ 
+				if ( maxNodeCount >= jsonObject.getInt("max_measurement_per_day") && jsonObject.getInt("max_measurement_per_day") != -1 ){ 
 					sumdbi.deactivateTest(con, testBean.getUserId());
 					status = true;
 				} else{

@@ -445,29 +445,16 @@ public class SUMDBI {
 		
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
-		Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
+		// Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
 		long stTime = System.currentTimeMillis();
 		
 		try {
-			if ( !jsonObject.getString("licLevel").equals("level0") ){
-				sbQuery	.append("SELECT count(*) as node_total_runcount ")
-						.append("FROM sum_har_test_results ")
-						.append("WHERE test_id IN ( ")
-						.append("  SELECT test_id ")
-						.append("  FROM sum_test_master ")
-						.append("  WHERE user_id = ? ")
-						.append(") AND received_on BETWEEN '").append(startTime).append("'::timestamp AND '").append(startTime).append("'::timestamp + interval '1 month' ");
-			} else {
-				sbQuery	.append("SELECT count(*) as node_total_runcount ")
-						.append("FROM sum_har_test_results ")
-						.append("WHERE test_id IN ( ")
-						.append("  SELECT test_id ")
-						.append("  FROM sum_test_master ")
-						.append("  WHERE user_id = ? ")
-						.append(") AND received_on BETWEEN date_trunc('month', CURRENT_DATE) AND date_trunc('month', CURRENT_DATE) + interval '1month' - interval '1day'");
-			}
-			
-			
+			sbQuery	.append("SELECT count(stm.user_id) as node_total_runcount ")
+					.append("FROM sum_test_master stm ")
+					.append("INNER JOIN sum_har_test_results shtr ON shtr.test_id = stm.test_id ")
+					.append("AND stm.user_id = ? ")
+					.append("AND shtr.received_on::DATE = now()::DATE ")
+					.append("GROUP BY stm.user_id ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setLong(1, userId);
 			rst = pstmt.executeQuery();
@@ -585,7 +572,7 @@ public class SUMDBI {
 						joUserDetails.put("end_date", rst.getTimestamp("end_date").getTime());
 					}
 					joUserDetails.put("start_date", rst.getTimestamp("start_date").getTime());
-					joUserDetails.put("max_measurement_per_month", rst.getLong("sum_desktop_max_measurements"));
+					joUserDetails.put("max_measurement_per_day", rst.getLong("sum_desktop_max_measurements"));
 					joUserDetails.put("licLevel", licLevel);
 				}
 			}
