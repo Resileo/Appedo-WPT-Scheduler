@@ -2,9 +2,7 @@ package com.appedo.wpt.scheduler.manager;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.TimeZone;
 
 import net.sf.json.JSONObject;
 
@@ -84,6 +82,7 @@ public class SUMManager {
 			sumdbi = new SUMDBI();
 			jsonObject = sumdbi.getUserDetails(con, testBean.getUserId());
 
+			LogManager.infoLog("Json:: "+jsonObject.toString());
 			if( !jsonObject.containsKey("start_date") ){
 				sumdbi.deactivateTest(con, testBean.getUserId());
 				status = true;

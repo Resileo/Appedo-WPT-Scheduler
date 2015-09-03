@@ -18,6 +18,7 @@ import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.timer.AgentLogTimerTask;
+import com.appedo.wpt.scheduler.timer.ResetMeasurementTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMAuditLogTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMSchedulerTimerTask;
 
@@ -31,8 +32,8 @@ public class InitServlet extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;
 	public static String realPath = null;
-	public static TimerTask timerTaskNodeInactive = null, timerTaskSUMScheduler = null;
-	public static Timer timerNodeInactive = new Timer(), timerSUMScheduler = new Timer(), timerAuditLog = new Timer(), timerAgentDetails = new Timer();
+	public static TimerTask timerTaskNodeInactive = null, timerTaskSUMScheduler = null, resetMeasurementCount = null;
+	public static Timer timerNodeInactive = new Timer(), timerSUMScheduler = new Timer(), timerAuditLog = new Timer(), timerAgentDetails = new Timer(), timerMeasurementCount = new Timer();
 	
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -83,6 +84,9 @@ public class InitServlet extends HttpServlet {
 			for(int nAgentTimerIndex = 0; nAgentTimerIndex < 10; nAgentTimerIndex ++){
 				timerAgentDetails.schedule(new AgentLogTimerTask(nAgentTimerIndex), 500, 1000);
 			}
+			
+			resetMeasurementCount = new ResetMeasurementTimerTask();
+			timerMeasurementCount.schedule(resetMeasurementCount, getNext1200AM(), 1000*60*60*24);
 			
 		} catch(Throwable th) {
         	System.out.println("Exception in InitServlet.init: "+th.getMessage());

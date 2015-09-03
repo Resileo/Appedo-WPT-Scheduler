@@ -179,6 +179,7 @@ public class UpdateAgentDetails extends HttpServlet {
 					}
 					
 					case "HAR" : {
+						con = DataBaseManager.giveConnection();
 						Long testid = joNodeSummary.getLong("test_id");
 						
 						if( joNodeSummary.getString("test_type").equals("TRANSACTION") ) {
@@ -186,6 +187,7 @@ public class UpdateAgentDetails extends HttpServlet {
 						} else if( joNodeSummary.getString("test_type").equals("URL") ) {
 							sumDBI.insertHarFileTableForURL(joNodeSummary, testid, joNodeSummary.getString("mac"));
 						}
+						sumDBI.updateMeasurementCntInUserMaster(con, testid);
 						break;
 					}
 					

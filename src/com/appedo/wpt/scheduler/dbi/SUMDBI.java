@@ -647,7 +647,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			// LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -694,6 +694,41 @@ public class SUMDBI {
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
+	}
+	
+	public void updateMeasurementCntInUserMaster(Connection con, long testId){
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		try {
+			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = sum_measurements_used_today + 1 WHERE user_id = (SELECT user_id FROM sum_test_master WHERE test_id = ?) ");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.setLong(1, testId);
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}									
+	}
+	
+	public void resetMeasurements(Connection con){
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		try {
+			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = 0 ");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}									
 	}
 }
 
