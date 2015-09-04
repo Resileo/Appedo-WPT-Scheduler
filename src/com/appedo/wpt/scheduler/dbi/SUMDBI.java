@@ -45,10 +45,12 @@ public class SUMDBI {
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
-					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView from sum_test_master t ")
+					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
+					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id ")
 					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -92,6 +94,30 @@ public class SUMDBI {
 					testBean.setLocation(rs.getString("location"));
 				}
 				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
+				
+				if( rs.getString("sla_id")!= null ){
+					testBean.setSlaId(rs.getLong("sla_id"));
+				}
+				
+				if( rs.getString("sla_sum_id")!= null ){
+					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
+				}
+				
+				if( rs.getString("is_above_threashold")!= null ){
+					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+				}
+				
+				if( rs.getString("warning_limit")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				}
+				
+				if( rs.getString("error_limit")!= null ){
+					testBean.setErrorValue(rs.getInt("error_limit"));
+				}
+				
+				if( rs.getString("min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+				}
 				
 				// testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 //				HashSet<String> a = new HashSet<String>();
@@ -169,10 +195,12 @@ public class SUMDBI {
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
-					.append("t.latency, t.packet_loss, sc.connection_name from sum_test_master t ")
+					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
+					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id where status=")
+					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id  where status=")
 					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
@@ -212,6 +240,31 @@ public class SUMDBI {
 					}
 				} else {
 					testBean.setLocation(rs.getString("location"));
+				}
+				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
+				
+				if( rs.getString("sla_id")!= null ){
+					testBean.setSlaId(rs.getLong("sla_id"));
+				}
+				
+				if( rs.getString("sla_sum_id")!= null ){
+					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
+				}
+				
+				if( rs.getString("is_above_threashold")!= null ){
+					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+				}
+				
+				if( rs.getString("warning_limit")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				}
+				
+				if( rs.getString("error_limit")!= null ){
+					testBean.setErrorValue(rs.getInt("error_limit"));
+				}
+				
+				if( rs.getString("min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
 				}
 				//testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 				rumTestBeans.add(testBean);
@@ -589,19 +642,21 @@ public class SUMDBI {
 	}
 
 
-	public void insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
 		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long harId = 0;
 		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
-			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
 			pstmt.setString(5, location);
 			pstmt.executeUpdate();
+			harId = DataBaseManager.returnKey(pstmt);
 			
 			sbQuery.setLength(0);
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
@@ -618,6 +673,7 @@ public class SUMDBI {
 			stmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
+		return harId;
 	}
 
 
@@ -699,6 +755,7 @@ public class SUMDBI {
 	public void updateMeasurementCntInUserMaster(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = sum_measurements_used_today + 1 WHERE user_id = (SELECT user_id FROM sum_test_master WHERE test_id = ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -708,6 +765,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("updateMeasurementCntInUserMaster Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -717,6 +775,7 @@ public class SUMDBI {
 	public void resetMeasurements(Connection con){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		long startTime = System.currentTimeMillis();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = 0 ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -725,6 +784,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.infoLog("resetMeasurements Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime));
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );

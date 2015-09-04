@@ -107,13 +107,14 @@ public class SUMManager {
 		return status;
 	}
 
-	public void insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
+		long harId = 0;
 		try {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
-			sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
+			harId = sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
@@ -121,6 +122,7 @@ public class SUMManager {
 			con = null;
 			sumdbi = null;
 		}
+		return harId;
 	}
 
 	public void updateHarTable(long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime) {
@@ -162,6 +164,22 @@ public class SUMManager {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
 			sumdbi.updateSumTestLastRunDetail(con, testId);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally {
+			DataBaseManager.close(con);
+			con = null;
+			sumdbi = null;
+		}
+	}
+
+	public void updateMeasurementCntInUserMaster(long testId) {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			sumdbi.updateMeasurementCntInUserMaster(con, testId);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {

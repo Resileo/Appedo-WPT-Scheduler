@@ -129,7 +129,8 @@ public class RunTest extends Thread {
 				}
 				
 				// preparation of sum_har_results table
-				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
+				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
+				sumManager.updateMeasurementCntInUserMaster(testBean.getTestId());
 				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
 				if( runTestCode != null){
@@ -180,6 +181,28 @@ public class RunTest extends Thread {
 										repeatLoadTime = joRepeatView.getInt("loadTime");
 									} 
 									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, firstLoadTime, repeatLoadTime );
+									
+									// SLA
+									JSONObject joSLA = new JSONObject();
+									if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
+										joSLA.put("sla_id", testBean.getSlaId());
+										joSLA.put("userid", testBean.getUserId());
+										joSLA.put("sla_sum_id", testBean.getSlaSumId());
+										joSLA.put("har_id", harId);
+										joSLA.put("is_above", testBean.isAboveThreashold());
+										joSLA.put("threshold_set_value", (testBean.getThreasholdValue()*1000));	
+										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
+										joSLA.put("received_value", firstLoadTime);
+										joSLA.put("min_breach_count", testBean.getMinBreachCount());
+										
+										client = new HttpClient();
+										// URLEncoder.encode(requestUrl,"UTF-8");
+										method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+										method.addParameter("command", "sumBreachCounterSet");
+										method.addParameter("sumBreachCounterset", joSLA.toString());
+//										method.setRequestHeader("Connection", "close");
+										statusCode = client.executeMethod(method);
+									}
 								}
 							}
 						}

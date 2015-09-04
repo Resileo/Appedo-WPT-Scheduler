@@ -37,7 +37,13 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private String latency;
 	private String packetLoss;
 	private String repeatView;
-	
+	private long slaId;
+	private long slaSumId;
+	private boolean aboveThreashold;
+	private int threasholdValue;
+	private int errorValue;
+	private int minBreachCount;
+		
 	private Date dateQueuedOn = null;
 	
 	private HashSet<String> hsTargetLocations = null;
@@ -249,5 +255,53 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 
 	public void setRepeatView(String repeatView) {
 		this.repeatView = repeatView;
+	}
+
+	public long getSlaId() {
+		return slaId;
+	}
+
+	public void setSlaId(long slaId) {
+		this.slaId = slaId;
+	}
+
+	public long getSlaSumId() {
+		return slaSumId;
+	}
+
+	public void setSlaSumId(long slaSumId) {
+		this.slaSumId = slaSumId;
+	}
+
+	public boolean isAboveThreashold() {
+		return aboveThreashold;
+	}
+
+	public void setAboveThreashold(boolean aboveThreashold) {
+		this.aboveThreashold = aboveThreashold;
+	}
+
+	public int getThreasholdValue() {
+		return threasholdValue;
+	}
+
+	public void setThreasholdValue(int threasholdValue) {
+		this.threasholdValue = threasholdValue;
+	}
+
+	public int getErrorValue() {
+		return errorValue;
+	}
+
+	public void setErrorValue(int errorValue) {
+		this.errorValue = errorValue;
+	}
+
+	public int getMinBreachCount() {
+		return minBreachCount;
+	}
+
+	public void setMinBreachCount(int minBreachCount) {
+		this.minBreachCount = minBreachCount;
 	}
 }
