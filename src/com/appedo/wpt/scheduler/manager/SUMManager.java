@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import net.sf.json.JSONObject;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;

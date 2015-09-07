@@ -14,9 +14,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.SUMManager;
 
 /**
@@ -188,12 +188,14 @@ public class RunTest extends Thread {
 										joSLA.put("sla_id", testBean.getSlaId());
 										joSLA.put("userid", testBean.getUserId());
 										joSLA.put("sla_sum_id", testBean.getSlaSumId());
+										joSLA.put("sum_test_id", testBean.getTestId());
 										joSLA.put("har_id", harId);
 										joSLA.put("is_above", testBean.isAboveThreashold());
 										joSLA.put("threshold_set_value", (testBean.getThreasholdValue()*1000));	
 										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
 										joSLA.put("received_value", firstLoadTime);
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
+										joSLA.put("location", strLocation.split(":")[0]);
 										
 										client = new HttpClient();
 										// URLEncoder.encode(requestUrl,"UTF-8");

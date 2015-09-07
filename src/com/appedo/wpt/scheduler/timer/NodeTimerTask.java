@@ -4,8 +4,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.TimerTask;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 
 public class NodeTimerTask extends TimerTask {

@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.appedo.wpt.scheduler.manager.LogManager;
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
 /**

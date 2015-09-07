@@ -10,17 +10,18 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
@@ -40,7 +41,7 @@ public class SUMDBI {
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
 		// RUMManager manager = new RUMManager();
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
@@ -131,7 +132,7 @@ public class SUMDBI {
 			LogManager.errorLog(ex);
 			throw ex;
 		} finally {
-			LogManager.infoLog("getTestIdDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime));
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rs);
 			rs = null;
 			DataBaseManager.close(pstmt);
@@ -499,7 +500,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
 		// Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
-		long stTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try {
 			sbQuery	.append("SELECT count(stm.user_id) as node_total_runcount ")
@@ -519,7 +520,7 @@ public class SUMDBI {
 			LogManager.errorLog(e);
 			throw e;
 		} finally {
-			LogManager.infoLog("getMaxMeasurementPerMonth Time Taken - in finally block::: "+(System.currentTimeMillis() - stTime)+" UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -537,7 +538,7 @@ public class SUMDBI {
 		Statement stmtUser = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("SELECT license_level FROM usermaster ")
 					.append("WHERE user_id="+userId);
@@ -563,7 +564,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
-			LogManager.infoLog("getUserDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rstUser);
 			rstUser = null;
 			DataBaseManager.close(stmtUser);
@@ -581,7 +582,7 @@ public class SUMDBI {
 	public void deactivateTest(Connection con, long userId) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try {
 			sbQuery	.append("update sum_test_master SET status = false ")
@@ -592,7 +593,7 @@ public class SUMDBI {
 		} catch (Throwable t) {
 			LogManager.errorLog(t);
 		} finally {
-			LogManager.infoLog("deactivateTest Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			
@@ -604,7 +605,7 @@ public class SUMDBI {
 		ResultSet rst = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			
 			if( ! licLevel.equals("level0") ) {
@@ -632,7 +633,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("getUserLicenseDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -646,7 +647,7 @@ public class SUMDBI {
 		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		long harId = 0;
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
@@ -666,7 +667,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("insertHarTable & updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			DataBaseManager.close(stmt);
@@ -680,7 +681,7 @@ public class SUMDBI {
 	public void updateHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET status_code = ?, status_text = ?, pageloadtime = ?, pageloadtime_repeatview = ? WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -703,7 +704,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			// LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+//			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -713,7 +714,7 @@ public class SUMDBI {
 	public void updateHarFileNameInTable(Connection con, long testId, String runTestCode, String harFileName) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET harfilename = ?, received_on = now() WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -725,7 +726,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateHarFileNameInTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -735,7 +736,7 @@ public class SUMDBI {
 	public void updateSumTestLastRunDetail(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -745,7 +746,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -755,7 +756,7 @@ public class SUMDBI {
 	public void updateMeasurementCntInUserMaster(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = sum_measurements_used_today + 1 WHERE user_id = (SELECT user_id FROM sum_test_master WHERE test_id = ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -765,7 +766,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateMeasurementCntInUserMaster Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -775,7 +776,7 @@ public class SUMDBI {
 	public void resetMeasurements(Connection con){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = 0 ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -784,7 +785,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("resetMeasurements Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime));
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );

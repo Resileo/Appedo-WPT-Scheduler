@@ -16,11 +16,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.appedo.wpt.scheduler.manager.LogManager;
-import com.sun.crypto.provider.SunJCE;
-
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
+
+import com.appedo.manager.LogManager;
+import com.sun.crypto.provider.SunJCE;
 
 /**
  * Class which handles the encryption and decryption operation required for this application.

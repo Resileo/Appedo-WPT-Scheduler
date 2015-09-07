@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import com.appedo.wpt.scheduler.manager.LogManager;
+import com.appedo.manager.LogManager;
  
 /**
  * A utility that downloads a file from a URL.

@@ -21,8 +21,8 @@ import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 
 /**
  * Class which do some utilization operation.
