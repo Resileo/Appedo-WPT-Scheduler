@@ -184,16 +184,16 @@ public class RunTest extends Thread {
 									
 									// SLA
 									JSONObject joSLA = new JSONObject();
-									if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
+									if( testBean.getThreasholdValue()> 0 && (firstLoadTime/1000) > testBean.getThreasholdValue() ){
 										joSLA.put("sla_id", testBean.getSlaId());
 										joSLA.put("userid", testBean.getUserId());
 										joSLA.put("sla_sum_id", testBean.getSlaSumId());
 										joSLA.put("sum_test_id", testBean.getTestId());
 										joSLA.put("har_id", harId);
 										joSLA.put("is_above", testBean.isAboveThreashold());
-										joSLA.put("threshold_set_value", (testBean.getThreasholdValue()*1000));	
+										joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
 										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
-										joSLA.put("received_value", firstLoadTime);
+										joSLA.put("received_value", firstLoadTime/1000);
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
 										
