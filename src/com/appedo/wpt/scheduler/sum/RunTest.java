@@ -14,9 +14,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.SUMManager;
 
 /**
@@ -129,7 +129,8 @@ public class RunTest extends Thread {
 				}
 				
 				// preparation of sum_har_results table
-				sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
+				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
+				sumManager.updateMeasurementCntInUserMaster(testBean.getTestId());
 				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
 				if( runTestCode != null){
@@ -170,7 +171,7 @@ public class RunTest extends Thread {
 								JSONObject joData = JSONObject.fromObject(joResponse.get("data"));
 								if( joData.containsKey("average") ){
 									JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
-									int repeatLoadTime = 0, firstLoadTime = 0;
+									double repeatLoadTime = 0, firstLoadTime = 0;
 									if(joAverage.get("firstView") instanceof JSONObject){
 										JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
 										firstLoadTime = joFirstView.getInt("loadTime");
@@ -179,7 +180,31 @@ public class RunTest extends Thread {
 										JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
 										repeatLoadTime = joRepeatView.getInt("loadTime");
 									} 
-									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, firstLoadTime, repeatLoadTime );
+									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
+									
+									// SLA
+									JSONObject joSLA = new JSONObject();
+									if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
+										joSLA.put("sla_id", testBean.getSlaId());
+										joSLA.put("userid", testBean.getUserId());
+										joSLA.put("sla_sum_id", testBean.getSlaSumId());
+										joSLA.put("sum_test_id", testBean.getTestId());
+										joSLA.put("har_id", harId);
+										joSLA.put("is_above", testBean.isAboveThreashold());
+										joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
+										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
+										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
+										joSLA.put("min_breach_count", testBean.getMinBreachCount());
+										joSLA.put("location", strLocation.split(":")[0]);
+										System.out.println("json sla :: "+joSLA.toString());
+										client = new HttpClient();
+										// URLEncoder.encode(requestUrl,"UTF-8");
+										method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+										method.addParameter("command", "sumBreachCounterSet");
+										method.addParameter("sumBreachCounterset", joSLA.toString());
+//										method.setRequestHeader("Connection", "close");
+										statusCode = client.executeMethod(method);
+									}
 								}
 							}
 						}

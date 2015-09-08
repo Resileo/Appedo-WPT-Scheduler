@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import net.sf.json.JSONObject;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
@@ -89,7 +90,8 @@ public class SUMManager {
 			} else {
 				int maxNodeCount = sumdbi.getMaxMeasurementPerMonth(con, testBean.getUserId(), jsonObject);
 				if ( maxNodeCount >= jsonObject.getInt("max_measurement_per_day") && jsonObject.getInt("max_measurement_per_day") != -1 ){ 
-					sumdbi.deactivateTest(con, testBean.getUserId());
+					LogManager.infoLog("Max Measurement Reached for the day: "+testBean.getUserId());
+					// sumdbi.deactivateTest(con, testBean.getUserId());
 					status = true;
 				} else{
 					status = false;
@@ -107,13 +109,14 @@ public class SUMManager {
 		return status;
 	}
 
-	public void insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
+		long harId = 0;
 		try {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
-			sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
+			harId = sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
@@ -121,6 +124,7 @@ public class SUMManager {
 			con = null;
 			sumdbi = null;
 		}
+		return harId;
 	}
 
 	public void updateHarTable(long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime) {
@@ -162,6 +166,22 @@ public class SUMManager {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
 			sumdbi.updateSumTestLastRunDetail(con, testId);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally {
+			DataBaseManager.close(con);
+			con = null;
+			sumdbi = null;
+		}
+	}
+
+	public void updateMeasurementCntInUserMaster(long testId) {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			sumdbi.updateMeasurementCntInUserMaster(con, testId);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {

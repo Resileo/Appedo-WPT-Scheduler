@@ -14,11 +14,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.CryptManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.SUMManager;
 
 /**

@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 
 public class SUMScheduler {

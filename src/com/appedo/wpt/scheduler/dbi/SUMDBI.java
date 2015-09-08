@@ -10,17 +10,18 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
@@ -40,15 +41,17 @@ public class SUMDBI {
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
 		// RUMManager manager = new RUMManager();
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
-					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView from sum_test_master t ")
+					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
+					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id ")
 					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -93,6 +96,30 @@ public class SUMDBI {
 				}
 				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
 				
+				if( rs.getString("sla_id")!= null ){
+					testBean.setSlaId(rs.getLong("sla_id"));
+				}
+				
+				if( rs.getString("sla_sum_id")!= null ){
+					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
+				}
+				
+				if( rs.getString("is_above_threashold")!= null ){
+					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+				}
+				
+				if( rs.getString("warning_limit")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				}
+				
+				if( rs.getString("error_limit")!= null ){
+					testBean.setErrorValue(rs.getInt("error_limit"));
+				}
+				
+				if( rs.getString("min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+				}
+				
 				// testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 //				HashSet<String> a = new HashSet<String>();
 //				a.add("ChennaiWindows8");
@@ -105,7 +132,7 @@ public class SUMDBI {
 			LogManager.errorLog(ex);
 			throw ex;
 		} finally {
-			LogManager.infoLog("getTestIdDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime));
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rs);
 			rs = null;
 			DataBaseManager.close(pstmt);
@@ -169,10 +196,12 @@ public class SUMDBI {
 		try{
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
-					.append("t.latency, t.packet_loss, sc.connection_name from sum_test_master t ")
+					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
+					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id where status=")
+					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id  where status=")
 					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
@@ -212,6 +241,31 @@ public class SUMDBI {
 					}
 				} else {
 					testBean.setLocation(rs.getString("location"));
+				}
+				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
+				
+				if( rs.getString("sla_id")!= null ){
+					testBean.setSlaId(rs.getLong("sla_id"));
+				}
+				
+				if( rs.getString("sla_sum_id")!= null ){
+					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
+				}
+				
+				if( rs.getString("is_above_threashold")!= null ){
+					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+				}
+				
+				if( rs.getString("warning_limit")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				}
+				
+				if( rs.getString("error_limit")!= null ){
+					testBean.setErrorValue(rs.getInt("error_limit"));
+				}
+				
+				if( rs.getString("min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
 				}
 				//testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 				rumTestBeans.add(testBean);
@@ -446,7 +500,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
 		// Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
-		long stTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try {
 			sbQuery	.append("SELECT count(stm.user_id) as node_total_runcount ")
@@ -466,7 +520,7 @@ public class SUMDBI {
 			LogManager.errorLog(e);
 			throw e;
 		} finally {
-			LogManager.infoLog("getMaxMeasurementPerMonth Time Taken - in finally block::: "+(System.currentTimeMillis() - stTime)+" UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -484,7 +538,7 @@ public class SUMDBI {
 		Statement stmtUser = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("SELECT license_level FROM usermaster ")
 					.append("WHERE user_id="+userId);
@@ -510,7 +564,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
-			LogManager.infoLog("getUserDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rstUser);
 			rstUser = null;
 			DataBaseManager.close(stmtUser);
@@ -528,7 +582,7 @@ public class SUMDBI {
 	public void deactivateTest(Connection con, long userId) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		
 		try {
 			sbQuery	.append("update sum_test_master SET status = false ")
@@ -539,7 +593,7 @@ public class SUMDBI {
 		} catch (Throwable t) {
 			LogManager.errorLog(t);
 		} finally {
-			LogManager.infoLog("deactivateTest Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			
@@ -551,7 +605,7 @@ public class SUMDBI {
 		ResultSet rst = null;
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			
 			if( ! licLevel.equals("level0") ) {
@@ -579,7 +633,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("getUserLicenseDetails Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " UserId: "+userId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
@@ -589,19 +643,21 @@ public class SUMDBI {
 	}
 
 
-	public void insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
 		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		long harId = 0;
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
-			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
 			pstmt.setString(5, location);
 			pstmt.executeUpdate();
+			harId = DataBaseManager.returnKey(pstmt);
 			
 			sbQuery.setLength(0);
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
@@ -611,20 +667,21 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("insertHarTable & updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+ " TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			DataBaseManager.close(stmt);
 			stmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
+		return harId;
 	}
 
 
 	public void updateHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET status_code = ?, status_text = ?, pageloadtime = ?, pageloadtime_repeatview = ? WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -647,7 +704,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			// LogManager.infoLog("updateHarTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+//			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -657,7 +714,7 @@ public class SUMDBI {
 	public void updateHarFileNameInTable(Connection con, long testId, String runTestCode, String harFileName) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE sum_har_test_results SET harfilename = ?, received_on = now() WHERE test_id = ? AND run_test_code = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -669,7 +726,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateHarFileNameInTable Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -679,7 +736,7 @@ public class SUMDBI {
 	public void updateSumTestLastRunDetail(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
-		long startTime = System.currentTimeMillis();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("update sum_test_master set last_run_detail = now() where test_id = ?");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -689,7 +746,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-			LogManager.infoLog("updateSumTestLastRunDetail Time Taken - in finally block::: "+(System.currentTimeMillis() - startTime)+" TestId: "+testId);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -699,6 +756,7 @@ public class SUMDBI {
 	public void updateMeasurementCntInUserMaster(Connection con, long testId){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = sum_measurements_used_today + 1 WHERE user_id = (SELECT user_id FROM sum_test_master WHERE test_id = ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -708,6 +766,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
@@ -717,6 +776,7 @@ public class SUMDBI {
 	public void resetMeasurements(Connection con){
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
+		Date dateLog = LogManager.logMethodStart();
 		try {
 			sbQuery	.append("UPDATE usermaster SET sum_measurements_used_today = 0 ");
 			pstmt = con.prepareStatement(sbQuery.toString());
@@ -725,6 +785,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );

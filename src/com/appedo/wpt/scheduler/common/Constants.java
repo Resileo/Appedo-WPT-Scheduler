@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.appedo.wpt.scheduler.manager.LogManager;
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
 /**
@@ -31,7 +31,7 @@ public class Constants {
 	//log4j properties file path
 	public static String LOG4J_PROPERTIES_FILE = "";
 	public static String EXPORT_URL;
-	public static String HAR_PATH;
+	public static String HAR_PATH, APPEDO_SLA_COLLECTOR;
 	
 	
 	/**
@@ -89,6 +89,7 @@ public class Constants {
      		
      		// Url to delete har files from har repository
     		EXPORT_URL = prop.getProperty("URL_TO_EXPORT_HAR");	
+    		APPEDO_SLA_COLLECTOR = prop.getProperty("APPEDO_SLA_COLLECTOR");
      		
      		// Webservice collector
         } catch(Exception e) {

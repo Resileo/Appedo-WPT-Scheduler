@@ -15,7 +15,7 @@ import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
-import com.appedo.wpt.scheduler.manager.LogManager;
+import com.appedo.manager.LogManager;
 
 /**
  * Establishes database connection to perform db operations

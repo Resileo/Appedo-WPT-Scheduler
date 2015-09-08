@@ -13,9 +13,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.LogManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.timer.AgentLogTimerTask;
 import com.appedo.wpt.scheduler.timer.ResetMeasurementTimerTask;
@@ -54,7 +54,7 @@ public class InitServlet extends HttpServlet {
 			Constants.CONSTANTS_FILE_PATH = InitServlet.realPath+strConstantsFilePath;
 			Constants.LOG4J_PROPERTIES_FILE = InitServlet.realPath+strLog4jFilePath;
 			// Loads log4j configuration properties
-			LogManager.initializePropertyConfigurator();
+			LogManager.initializePropertyConfigurator(Constants.LOG4J_PROPERTIES_FILE);
 			// Loads Constant properties 
 			Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
 			
