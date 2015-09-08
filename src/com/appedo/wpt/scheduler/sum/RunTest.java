@@ -171,7 +171,7 @@ public class RunTest extends Thread {
 								JSONObject joData = JSONObject.fromObject(joResponse.get("data"));
 								if( joData.containsKey("average") ){
 									JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
-									int repeatLoadTime = 0, firstLoadTime = 0;
+									double repeatLoadTime = 0, firstLoadTime = 0;
 									if(joAverage.get("firstView") instanceof JSONObject){
 										JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
 										firstLoadTime = joFirstView.getInt("loadTime");
@@ -180,11 +180,11 @@ public class RunTest extends Thread {
 										JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
 										repeatLoadTime = joRepeatView.getInt("loadTime");
 									} 
-									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, firstLoadTime, repeatLoadTime );
+									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 									
 									// SLA
 									JSONObject joSLA = new JSONObject();
-									if( testBean.getThreasholdValue()> 0 && (firstLoadTime/1000) > testBean.getThreasholdValue() ){
+									if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
 										joSLA.put("sla_id", testBean.getSlaId());
 										joSLA.put("userid", testBean.getUserId());
 										joSLA.put("sla_sum_id", testBean.getSlaSumId());
@@ -193,10 +193,10 @@ public class RunTest extends Thread {
 										joSLA.put("is_above", testBean.isAboveThreashold());
 										joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
 										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
-										joSLA.put("received_value", firstLoadTime/1000);
+										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
-										
+										System.out.println("json sla :: "+joSLA.toString());
 										client = new HttpClient();
 										// URLEncoder.encode(requestUrl,"UTF-8");
 										method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);

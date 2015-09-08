@@ -90,7 +90,8 @@ public class SUMManager {
 			} else {
 				int maxNodeCount = sumdbi.getMaxMeasurementPerMonth(con, testBean.getUserId(), jsonObject);
 				if ( maxNodeCount >= jsonObject.getInt("max_measurement_per_day") && jsonObject.getInt("max_measurement_per_day") != -1 ){ 
-					sumdbi.deactivateTest(con, testBean.getUserId());
+					LogManager.infoLog("Max Measurement Reached for the day: "+testBean.getUserId());
+					// sumdbi.deactivateTest(con, testBean.getUserId());
 					status = true;
 				} else{
 					status = false;
