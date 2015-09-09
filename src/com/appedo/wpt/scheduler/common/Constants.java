@@ -31,7 +31,7 @@ public class Constants {
 	//log4j properties file path
 	public static String LOG4J_PROPERTIES_FILE = "";
 	public static String EXPORT_URL;
-	public static String HAR_PATH, APPEDO_SLA_COLLECTOR;
+	public static String HAR_PATH, APPEDO_SLA_COLLECTOR, WPT_LOCATION_SERVER;
 	
 	
 	/**
@@ -90,6 +90,7 @@ public class Constants {
      		// Url to delete har files from har repository
     		EXPORT_URL = prop.getProperty("URL_TO_EXPORT_HAR");	
     		APPEDO_SLA_COLLECTOR = prop.getProperty("APPEDO_SLA_COLLECTOR");
+    		WPT_LOCATION_SERVER = prop.getProperty("WPT_LOCATION_SERVER");
      		
      		// Webservice collector
         } catch(Exception e) {

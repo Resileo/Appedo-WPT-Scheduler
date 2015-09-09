@@ -67,7 +67,7 @@ public class RunTest extends Thread {
 			client = new HttpClient();
 			// URLEncoder.encode(requestUrl,"UTF-8");
 			LogManager.infoLog("Before Starting Test (runtest.php) for Test Id: "+testBean.getTestId());
-			method = new PostMethod("http://54.237.70.70/runtest.php");
+			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"runtest.php");
 			method.addParameter("url", testBean.getURL());
 			method.addParameter("label", testBean.getTestName());
 			method.addParameter("location", strLocation);
@@ -139,7 +139,7 @@ public class RunTest extends Thread {
 					while(statusCheckStatus != 200){
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
-						method = new PostMethod("http://54.237.70.70/testStatus.php");
+						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"testStatus.php");
 						method.addParameter("f", "json");
 						method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
@@ -160,7 +160,7 @@ public class RunTest extends Thread {
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
 						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId());
-						method = new PostMethod("http://54.237.70.70/jsonResult.php");
+						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"jsonResult.php");
 						method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
 						statusCode = client.executeMethod(method);
@@ -209,7 +209,7 @@ public class RunTest extends Thread {
 							}
 						}
 						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId());
-						String fileURL = "http://54.237.70.70/export.php?bodies=1&pretty=1&test="+runTestCode;
+						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
 						String saveDir = Constants.HAR_PATH+testBean.getTestId();
 						HttpDownloadUtility.downloadFile(fileURL, saveDir);
 						
