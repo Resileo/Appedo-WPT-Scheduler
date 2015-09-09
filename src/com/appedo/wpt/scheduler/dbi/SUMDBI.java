@@ -52,7 +52,7 @@ public class SUMDBI {
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
 					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id ")
-					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() and testtype = 'URL'")
+					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() and testtype = 'URL' ")
 					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			rs = pstmt.executeQuery();
@@ -203,7 +203,7 @@ public class SUMDBI {
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
 					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id  where status=")
 					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
-					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
+					.append("and testtype = 'URL' and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(sbQuery.toString());
 			rumTestBeans.clear();
