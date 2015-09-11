@@ -13,6 +13,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.json.XML;
 
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
@@ -160,50 +161,54 @@ public class RunTest extends Thread {
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
 						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId());
-						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"jsonResult.php");
-						method.addParameter("test", runTestCode);
+						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+runTestCode+"/");
+						// method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
 						statusCode = client.executeMethod(method);
 						responseStream = method.getResponseBodyAsString();
-						if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
-							joResponse = JSONObject.fromObject(responseStream);
-							if(joResponse.containsKey("data")){
-								JSONObject joData = JSONObject.fromObject(joResponse.get("data"));
-								if( joData.containsKey("average") ){
-									JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
-									double repeatLoadTime = 0, firstLoadTime = 0;
-									if(joAverage.get("firstView") instanceof JSONObject){
-										JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
-										firstLoadTime = joFirstView.getInt("loadTime");
-									} 
-									if(joAverage.get("repeatView") instanceof JSONObject){
-										JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
-										repeatLoadTime = joRepeatView.getInt("loadTime");
-									} 
-									sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
-									
-									// SLA
-									JSONObject joSLA = new JSONObject();
-									if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
-										joSLA.put("sla_id", testBean.getSlaId());
-										joSLA.put("userid", testBean.getUserId());
-										joSLA.put("sla_sum_id", testBean.getSlaSumId());
-										joSLA.put("sum_test_id", testBean.getTestId());
-										joSLA.put("har_id", harId);
-										joSLA.put("is_above", testBean.isAboveThreashold());
-										joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
-										joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
-										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
-										joSLA.put("min_breach_count", testBean.getMinBreachCount());
-										joSLA.put("location", strLocation.split(":")[0]);
-										System.out.println("json sla :: "+joSLA.toString());
-										client = new HttpClient();
-										// URLEncoder.encode(requestUrl,"UTF-8");
-										method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-										method.addParameter("command", "sumBreachCounterSet");
-										method.addParameter("sumBreachCounterset", joSLA.toString());
-//										method.setRequestHeader("Connection", "close");
-										statusCode = client.executeMethod(method);
+						org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
+						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
+							joResponse = JSONObject.fromObject(xmlJSONObj.toString());
+							if (joResponse.containsKey("response")) {
+								JSONObject jores = JSONObject.fromObject(joResponse.get("response"));
+								if(jores.containsKey("data")){
+									JSONObject joData = JSONObject.fromObject(jores.get("data"));
+									if( joData.containsKey("average") ){
+										JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
+										double repeatLoadTime = 0, firstLoadTime = 0;
+										if(joAverage.get("firstView") instanceof JSONObject){
+											JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
+											firstLoadTime = joFirstView.getInt("loadTime");
+										} 
+										if(joAverage.get("repeatView") instanceof JSONObject){
+											JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
+											repeatLoadTime = joRepeatView.getInt("loadTime");
+										} 
+										sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
+										
+										// SLA
+										JSONObject joSLA = new JSONObject();
+										if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
+											joSLA.put("sla_id", testBean.getSlaId());
+											joSLA.put("userid", testBean.getUserId());
+											joSLA.put("sla_sum_id", testBean.getSlaSumId());
+											joSLA.put("sum_test_id", testBean.getTestId());
+											joSLA.put("har_id", harId);
+											joSLA.put("is_above", testBean.isAboveThreashold());
+											joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
+											joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
+											joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
+											joSLA.put("min_breach_count", testBean.getMinBreachCount());
+											joSLA.put("location", strLocation.split(":")[0]);
+											System.out.println("json sla :: "+joSLA.toString());
+											client = new HttpClient();
+											// URLEncoder.encode(requestUrl,"UTF-8");
+											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+											method.addParameter("command", "sumBreachCounterSet");
+											method.addParameter("sumBreachCounterset", joSLA.toString());
+//											method.setRequestHeader("Connection", "close");
+											statusCode = client.executeMethod(method);
+										}
 									}
 								}
 							}
