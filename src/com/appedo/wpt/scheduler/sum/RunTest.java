@@ -210,6 +210,8 @@ public class RunTest extends Thread {
 											statusCode = client.executeMethod(method);
 										}
 									}
+									// Insert Json into db
+									sumManager.insertResultJson(joData, harId);
 								}
 							}
 						}

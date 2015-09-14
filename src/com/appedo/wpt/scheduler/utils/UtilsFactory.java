@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.postgresql.util.PGobject;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -438,5 +440,16 @@ public class UtilsFactory {
 		}
 		
 		return jaAgents;
+	}
+
+	public static PGobject getPgObject(String value){
+		PGobject jsonObject = new PGobject();
+		try {
+			jsonObject.setType("json");
+			jsonObject.setValue(value);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		}
+		return jsonObject;
 	}
 }

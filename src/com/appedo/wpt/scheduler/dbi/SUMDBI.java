@@ -503,12 +503,8 @@ public class SUMDBI {
 		Date dateLog = LogManager.logMethodStart();
 		
 		try {
-			sbQuery	.append("SELECT count(stm.user_id) as node_total_runcount ")
-					.append("FROM sum_test_master stm ")
-					.append("INNER JOIN sum_har_test_results shtr ON shtr.test_id = stm.test_id ")
-					.append("AND stm.user_id = ? ")
-					.append("AND shtr.received_on::DATE = now()::DATE ")
-					.append("GROUP BY stm.user_id ");
+			sbQuery	.append("SELECT sum_measurements_used_today as node_total_runcount ")
+					.append("FROM usermaster WHERE user_id = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setLong(1, userId);
 			rst = pstmt.executeQuery();
@@ -790,6 +786,28 @@ public class SUMDBI {
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}									
+	}
+
+
+	public void insertResultJson(Connection con, JSONObject joData, long harId) {
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			sbQuery	.append("UPDATE sum_har_test_results SET josn_result = ? WHERE id = ? ");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.setObject(1, UtilsFactory.getPgObject(joData.toString()));
+			pstmt.setInt(2, ((Long) harId).intValue());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}
 	}
 }
 
