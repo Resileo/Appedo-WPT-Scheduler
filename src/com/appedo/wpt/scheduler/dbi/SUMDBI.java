@@ -791,5 +791,27 @@ public class SUMDBI {
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}									
 	}
+
+
+	public void insertResultJson(Connection con, JSONObject joData, long harId) {
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			sbQuery	.append("UPDATE sum_har_test_results SET josn_result = ? WHERE id = ? ");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.setObject(1, UtilsFactory.getPgObject(joData.toString()));
+			pstmt.setInt(2, ((Long) harId).intValue());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}
+	}
 }
 
