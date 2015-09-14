@@ -503,12 +503,8 @@ public class SUMDBI {
 		Date dateLog = LogManager.logMethodStart();
 		
 		try {
-			sbQuery	.append("SELECT count(stm.user_id) as node_total_runcount ")
-					.append("FROM sum_test_master stm ")
-					.append("INNER JOIN sum_har_test_results shtr ON shtr.test_id = stm.test_id ")
-					.append("AND stm.user_id = ? ")
-					.append("AND shtr.received_on::DATE = now()::DATE ")
-					.append("GROUP BY stm.user_id ");
+			sbQuery	.append("SELECT sum_measurements_used_today as node_total_runcount ")
+					.append("FROM usermaster WHERE user_id = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setLong(1, userId);
 			rst = pstmt.executeQuery();
