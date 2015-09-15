@@ -75,19 +75,19 @@ public class RunTest extends Thread {
 			// method.addParameter("runs", ""+testBean.getRunEveryMinute()); -should be discussed
 			method.addParameter("runs", "1");
 			method.addParameter("fvonly", testBean.getRepeatView()); //Set 0 to get Repeatview and 1 for first view alone
-			method.addParameter("domelement", "null");
+			// method.addParameter("domelement", "null");
 			method.addParameter("private", "0");
 			method.addParameter("connections", "0");
 			method.addParameter("web10", "0");
-			method.addParameter("block", "null");
-			method.addParameter("login", "null");
-			method.addParameter("password", "null");
+			// method.addParameter("block", "null");
+			// method.addParameter("login", "null");
+			// method.addParameter("password", "null");
 			method.addParameter("authType", "0");
 			method.addParameter("video", "0");
 			method.addParameter("f", "json");
-			method.addParameter("r", "null");
-			method.addParameter("notify", "null");
-			method.addParameter("pingback", "null");
+			// method.addParameter("r", "null");
+			// method.addParameter("notify", "null");
+			// method.addParameter("pingback", "null");
 			method.addParameter("bwDown", testBean.getDownload());
 			method.addParameter("bwUp", testBean.getUpload());
 			method.addParameter("latency", testBean.getLatency());
@@ -105,10 +105,10 @@ public class RunTest extends Thread {
 			method.addParameter("mobile", "0");
 			method.addParameter("mv", "0");
 			method.addParameter("htmlbody", "0");
-			method.addParameter("tsview_id", "null");
-			method.addParameter("custom", "null");
-			method.addParameter("tester", "null");
-			method.addParameter("affinity", "null");
+			// method.addParameter("tsview_id", "null");
+			// method.addParameter("custom", "null");
+			// method.addParameter("tester", "null");
+			// method.addParameter("affinity", "null");
 			method.addParameter("timeline", "0");
 			method.addParameter("timelineStack", "0");
 			method.addParameter("ignoreSSL", "0");
