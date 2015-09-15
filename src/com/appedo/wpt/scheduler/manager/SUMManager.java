@@ -190,4 +190,20 @@ public class SUMManager {
 			sumdbi = null;
 		}
 	}
+
+	public void insertResultJson(JSONObject joData, long harId) {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			sumdbi.insertResultJson(con, joData, harId);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally {
+			DataBaseManager.close(con);
+			con = null;
+			sumdbi = null;
+		}
+	}
 }
