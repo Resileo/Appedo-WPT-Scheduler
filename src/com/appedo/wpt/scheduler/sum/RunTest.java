@@ -196,7 +196,7 @@ public class RunTest extends Thread {
 											joSLA.put("har_id", harId);
 											joSLA.put("is_above", testBean.isAboveThreashold());
 											joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
-											joSLA.put("err_set_value", (testBean.getErrorValue()*1000));
+											joSLA.put("err_set_value", testBean.getErrorValue());
 											joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
 											joSLA.put("min_breach_count", testBean.getMinBreachCount());
 											joSLA.put("location", strLocation.split(":")[0]);
