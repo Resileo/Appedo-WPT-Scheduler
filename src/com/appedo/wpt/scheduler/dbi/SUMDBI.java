@@ -47,7 +47,7 @@ public class SUMDBI {
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
 					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
+					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
@@ -108,12 +108,12 @@ public class SUMDBI {
 					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
 				}
 				
-				if( rs.getString("warning_limit")!= null ){
-					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				if( rs.getString("warning")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning"));
 				}
 				
-				if( rs.getString("error_limit")!= null ){
-					testBean.setErrorValue(rs.getInt("error_limit"));
+				if( rs.getString("error")!= null ){
+					testBean.setErrorValue(rs.getInt("error"));
 				}
 				
 				if( rs.getString("min_breach_count")!= null ){
@@ -197,7 +197,7 @@ public class SUMDBI {
 			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
 					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, sla.warning_limit, sla.error_limit, sla.min_breach_count from sum_test_master t ")
+					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count from sum_test_master t ")
 					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
 					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
@@ -256,12 +256,12 @@ public class SUMDBI {
 					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
 				}
 				
-				if( rs.getString("warning_limit")!= null ){
-					testBean.setThreasholdValue(rs.getInt("warning_limit"));
+				if( rs.getString("warning")!= null ){
+					testBean.setThreasholdValue(rs.getInt("warning"));
 				}
 				
-				if( rs.getString("error_limit")!= null ){
-					testBean.setErrorValue(rs.getInt("error_limit"));
+				if( rs.getString("error")!= null ){
+					testBean.setErrorValue(rs.getInt("error"));
 				}
 				
 				if( rs.getString("min_breach_count")!= null ){
