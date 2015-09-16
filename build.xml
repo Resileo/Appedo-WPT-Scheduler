@@ -32,7 +32,7 @@
                         <fileset dir="WebRoot"/>
 						<classes dir="${classes}"/>
                 </war>
-				<copy file="${wars}/appedo_wpt_scheduler.war.war" todir="/opt/artifacts"/>
+				<copy file="${wars}/appedo_wpt_scheduler.war" todir="/opt/artifacts"/>
                 
         </target>
 </project>
