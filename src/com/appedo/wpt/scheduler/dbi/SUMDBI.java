@@ -794,7 +794,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		Date dateLog = LogManager.logMethodStart();
 		try {
-			sbQuery	.append("UPDATE sum_har_test_results SET josn_result = ? WHERE id = ? ");
+			sbQuery	.append("UPDATE sum_har_test_results SET json_result = ? WHERE id = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setObject(1, UtilsFactory.getPgObject(joData.toString()));
 			pstmt.setInt(2, ((Long) harId).intValue());
