@@ -645,13 +645,16 @@ public class SUMDBI {
 		long harId = 0;
 		Date dateLog = LogManager.logMethodStart();
 		try {
-			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
+			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location, location_name, browser_name, connection_name ) VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
 			pstmt.setString(5, location);
+			pstmt.setString(6, location.split(":")[0]);
+			pstmt.setString(7, location.split(":")[1].split("\\.")[0]);
+			pstmt.setString(8, location.split(":")[1].split("\\.")[1]);
 			pstmt.executeUpdate();
 			harId = DataBaseManager.returnKey(pstmt);
 			
