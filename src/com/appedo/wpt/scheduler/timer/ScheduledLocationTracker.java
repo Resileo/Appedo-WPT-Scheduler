@@ -76,6 +76,7 @@ public class ScheduledLocationTracker extends TimerTask {
 					sumdbi.updateInactiveLocation(activeNodes, con);
 
 				} else {
+					sumdbi.updateAllLocationInactive(con);
 					LogManager.infoLog("No locations found in getLocations.php API");
 				}
 			} else {

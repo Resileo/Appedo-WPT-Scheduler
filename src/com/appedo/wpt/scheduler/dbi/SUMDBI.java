@@ -893,6 +893,25 @@ public class SUMDBI {
 			pstmt = null;
 		}
 	}
+	
+	public void updateAllLocationInactive(Connection con) {
+		PreparedStatement pstmt = null;
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			StringBuilder sbQuery = new StringBuilder();
+
+			sbQuery.append("UPDATE sum_node_details SET sum_node_status = 'Inactive'");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.executeUpdate();
+			LogManager.infoLog("All WPT_Agent's status have been updated to Inactive on : "+new Date());
+		} catch (Exception ex) {
+			LogManager.errorLog(ex);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+		}
+	}
 
 }
 
