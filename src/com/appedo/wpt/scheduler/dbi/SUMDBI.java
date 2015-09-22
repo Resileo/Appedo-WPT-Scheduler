@@ -861,7 +861,7 @@ public class SUMDBI {
 				LogManager.infoLog("New WPT_Agent Have Been Inserted at "+new Date());
 			}
 		} catch (Exception ex) {
-			LogManager.errorLog(ex.getMessage());
+			LogManager.errorLog(ex);
 		}finally{
 			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
@@ -883,7 +883,7 @@ public class SUMDBI {
 			pstmt.executeUpdate();
 			LogManager.infoLog("WPT_Agent Status Have Been updated at "+new Date());
 		} catch (Exception ex) {
-			LogManager.errorLog(ex.getMessage());
+			LogManager.errorLog(ex);
 		}finally{
 			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);

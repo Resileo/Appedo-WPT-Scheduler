@@ -20,14 +20,12 @@ public class ScheduledLocationTracker extends TimerTask {
 	Connection con = null;
 
 	public ScheduledLocationTracker() {
-		this.con = DataBaseManager.giveConnection();
+		
 	}
 
-
 	public void run() {
-
+		con = DataBaseManager.giveConnection();
 		SUMDBI sumdbi = new SUMDBI();
-
 		HashSet < String > existingloc = sumdbi.extractexistingloc(con);
 		HashSet < String > locToInsert = new HashSet < String > ();
 		// Create Repetitively task for every 1 secs
@@ -43,7 +41,7 @@ public class ScheduledLocationTracker extends TimerTask {
 			method.addParameter("f", "json");
 			method.setRequestHeader("Connection", "close");
 			int statusCode = client.executeMethod(method);
-			System.out.println(statusCode);
+			//System.out.println(statusCode);
 			String responseStream = method.getResponseBodyAsString();
 			HashSet < String > activeLocations = new HashSet < String > ();
 
@@ -78,27 +76,31 @@ public class ScheduledLocationTracker extends TimerTask {
 					sumdbi.updateInactiveLocation(activeNodes, con);
 
 				} else {
-					LogManager.infoLog("No locations were there in getLocations.php API");
+					LogManager.infoLog("No locations found in getLocations.php API");
 				}
 			} else {
-				LogManager.infoLog("no response from the wpt server");
+				LogManager.infoLog("No response from wpt server. Response status code : "+statusCode);
 			}
 		} catch (Throwable e) {
 			LogManager.errorLog(e);
+			
+		}finally{
 			try {
-				if (!DataBaseManager.isConnectionExists(con)) {
-					con = DataBaseManager.reEstablishConnection(con);
+				if (con != null) {
+					DataBaseManager.close(con);
 				}
-			} catch (SQLException e1) {
-				LogManager.errorLog(e);
+			} catch (Exception e1) {
+				LogManager.errorLog(e1);
 			}
 		}
 	}
 
 	protected void finalize() throws Throwable {
 		LogManager.infoLog("Node inactiavting Thread is stopping");
+		if (con != null) {
 		DataBaseManager.close(con);
 		con = null;
+		}
 		super.finalize();
 	}
 }
