@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.util.HttpURLConnection;
 
 import com.appedo.manager.LogManager;
+import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 
@@ -34,12 +35,11 @@ public class ScheduledLocationTracker extends TimerTask {
 		PostMethod method = null;
 		JSONObject joResponse = null;
 
-
 		try {
 			client = new HttpClient();
 
 			//method = new PostMethod("http://23.23.129.228/getLocations.php");
-			method = new PostMethod("http://54.235.163.80/getLocations.php");
+			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"getLocations.php");
 			method.addParameter("f", "json");
 			method.setRequestHeader("Connection", "close");
 			int statusCode = client.executeMethod(method);
@@ -49,42 +49,44 @@ public class ScheduledLocationTracker extends TimerTask {
 
 			if (statusCode == HttpURLConnection.HTTP_OK && responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
 				StringBuilder keyStrbuildr = new StringBuilder();
-
 				joResponse = JSONObject.fromObject(responseStream);
-				JSONObject locationresp = (JSONObject) joResponse.get("data");
+				if (!joResponse.getString("data").equals("[]")) {
+					JSONObject locationresp = (JSONObject) joResponse.get("data");
+					for (Object key: locationresp.keySet()) {
 
-				for (Object key: locationresp.keySet()) {
-
-					String keyStr = (String) key;
-					activeLocations.add(keyStr.split(":")[0]);
-					keyStrbuildr.append("'")
-						.append(keyStr.split(":")[0])
-						.append("',");
-				}
-				keyStrbuildr.deleteCharAt(keyStrbuildr.lastIndexOf(","));
-				String activeNodes = keyStrbuildr.toString();
-
-				for (String activeloc: activeLocations) {
-					if (!existingloc.contains(activeloc)) {
-						locToInsert.add(activeloc);
+						String keyStr = (String) key;
+						activeLocations.add(keyStr.split(":")[0]);
+						keyStrbuildr.append("'")
+							.append(keyStr.split(":")[0])
+							.append("',");
 					}
-				}
-				// insert new locations
-				if (locToInsert.size() > 0) {
-					sumdbi.insertNewLocation(con, locToInsert);
-				} else {
-					LogManager.infoLog("No Locations to insert");
-				}
-				//update inactive locations
-				sumdbi.updateInactiveLocation(activeNodes, con);
+					keyStrbuildr.deleteCharAt(keyStrbuildr.lastIndexOf(","));
+					String activeNodes = keyStrbuildr.toString();
 
+					for (String activeloc: activeLocations) {
+						if (!existingloc.contains(activeloc)) {
+							locToInsert.add(activeloc);
+						}
+					}
+					// insert new locations
+					if (locToInsert.size() > 0) {
+						sumdbi.insertNewLocation(con, locToInsert);
+					} else {
+						LogManager.infoLog("No Locations to insert");
+					}
+					//update inactive locations
+					sumdbi.updateInactiveLocation(activeNodes, con);
+
+				} else {
+					LogManager.infoLog("No locations were there in getLocations.php API");
+				}
 			} else {
 				LogManager.infoLog("no response from the wpt server");
 			}
-		} catch(Throwable e) {
-			LogManager.errorLog(e);		
+		} catch (Throwable e) {
+			LogManager.errorLog(e);
 			try {
-				if( ! DataBaseManager.isConnectionExists(con) ){
+				if (!DataBaseManager.isConnectionExists(con)) {
 					con = DataBaseManager.reEstablishConnection(con);
 				}
 			} catch (SQLException e1) {
