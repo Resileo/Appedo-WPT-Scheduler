@@ -21,6 +21,7 @@ import com.appedo.wpt.scheduler.timer.AgentLogTimerTask;
 import com.appedo.wpt.scheduler.timer.ResetMeasurementTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMAuditLogTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMSchedulerTimerTask;
+import com.appedo.wpt.scheduler.timer.ScheduledLocationTracker;
 
 /**
  * Servlet to handle one operation for the whole application
@@ -32,8 +33,8 @@ public class InitServlet extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;
 	public static String realPath = null;
-	public static TimerTask timerTaskNodeInactive = null, timerTaskSUMScheduler = null, resetMeasurementCount = null;
-	public static Timer timerNodeInactive = new Timer(), timerSUMScheduler = new Timer(), timerAuditLog = new Timer(), timerAgentDetails = new Timer(), timerMeasurementCount = new Timer();
+	public static TimerTask timerTaskNodeInactive = null, timerTaskNodeactive = null,timerTaskSUMScheduler = null, resetMeasurementCount = null;
+	public static Timer timerNodeInactive = new Timer(), timerNodeActive = new Timer(),timerSUMScheduler = new Timer(), timerAuditLog = new Timer(), timerAgentDetails = new Timer(), timerMeasurementCount = new Timer();
 	
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -66,6 +67,10 @@ public class InitServlet extends HttpServlet {
 //			timerTaskNodeInactive = new NodeTimerTask();
 //			timerNodeInactive.schedule(timerTaskNodeInactive, 500, Constants.TIMER_PERIOD * 1000);
         	
+			timerTaskNodeactive = new ScheduledLocationTracker();
+			timerNodeActive.schedule(timerTaskNodeactive, 100, 1000 * 60 * 10);
+        	
+			
 			timerTaskSUMScheduler = new SUMSchedulerTimerTask();
 			timerSUMScheduler.schedule(timerTaskSUMScheduler, 150, Constants.SCHEDULE_INTERVAL);
 			
