@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Random;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -645,13 +646,16 @@ public class SUMDBI {
 		long harId = 0;
 		Date dateLog = LogManager.logMethodStart();
 		try {
-			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location) VALUES (?, now(), ?, ?, ?, ?) ");
+			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location, location_name, browser_name, connection_name ) VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
 			pstmt.setInt(3, statusCode);
 			pstmt.setString(4, statusText);
 			pstmt.setString(5, location);
+			pstmt.setString(6, location.split(":")[0]);
+			pstmt.setString(7, location.split(":")[1].split("\\.")[0]);
+			pstmt.setString(8, location.split(":")[1].split("\\.")[1]);
 			pstmt.executeUpdate();
 			harId = DataBaseManager.returnKey(pstmt);
 			
@@ -809,5 +813,105 @@ public class SUMDBI {
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	}
+	
+	public HashSet < String > extractexistingloc(Connection con) {
+
+		HashSet < String > retrivedloc = new HashSet < String > ();
+		ResultSet rs =null;
+		Statement stmt = null;
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			stmt = con.createStatement();
+			rs = stmt.executeQuery("select country||'-'||'-'||city as loc from sum_node_details;");
+			while (rs.next()) {
+				retrivedloc.add(rs.getString(1).trim());
+			}
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(rs);
+			rs = null;
+			DataBaseManager.close(stmt);
+			stmt = null;
+		}
+		return retrivedloc;
+	}
+
+	public void insertNewLocation(Connection con, HashSet < String > locToUpadate) {
+
+		PreparedStatement pstmt = null;
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			StringBuilder sbQuery = new StringBuilder();
+
+			for (String locToinsert: locToUpadate) {
+				sbQuery.append("INSERT INTO sum_node_details (")
+					.append("sum_user_id,mac_address,agent_type,ipaddress,city,state,country,latitude,")
+					.append("longitude,selenium_webdriver_version,jre_version,firebug_version,netexport_version,")
+					.append("os_type,operating_system,os_version,chrome_version,created_by,created_on,sum_node_status,sum_agent_version) ")
+					.append("values (1,'")
+					.append(1 - new Random().nextInt())
+					.append("','wpt_Agent','NA','")
+					.append(locToinsert.split("--")[1])
+					.append("','NA','")
+					.append(locToinsert.split("--")[0])
+					.append("','0.0','0.0','NA','NA','NA','NA','Windows','windows server 2008 r2','3.13.0-32-generic'")
+					.append(",'NA',-1,now(),'active','null-1.0.13')");
+
+				pstmt = con.prepareStatement(sbQuery.toString());
+				pstmt.executeUpdate();
+				LogManager.infoLog("New WPT_Agent Have Been Inserted at "+new Date());
+			}
+		} catch (Exception ex) {
+			LogManager.errorLog(ex);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+		}
+	}
+
+	public void updateInactiveLocation(String activeLocations, Connection con) {
+		PreparedStatement pstmt = null;
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			StringBuilder sbQuery = new StringBuilder();
+
+			sbQuery.append("UPDATE sum_node_details SET sum_node_status = CASE WHEN country||'-'||'-'||city IN(")
+				.append(activeLocations)
+				.append(") THEN 'active' ELSE 'Inactive' END");
+
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.executeUpdate();
+			LogManager.infoLog("WPT_Agent Status Have Been updated at "+new Date());
+		} catch (Exception ex) {
+			LogManager.errorLog(ex);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+		}
+	}
+	
+	public void updateAllLocationInactive(Connection con) {
+		PreparedStatement pstmt = null;
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			StringBuilder sbQuery = new StringBuilder();
+
+			sbQuery.append("UPDATE sum_node_details SET sum_node_status = 'Inactive'");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.executeUpdate();
+			LogManager.infoLog("All WPT_Agent's status have been updated to Inactive on : "+new Date());
+		} catch (Exception ex) {
+			LogManager.errorLog(ex);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+		}
+	}
+
 }
 
