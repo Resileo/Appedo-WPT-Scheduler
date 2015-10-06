@@ -151,7 +151,8 @@ public class RunTest extends Thread {
 						if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
 							joResponse = JSONObject.fromObject(responseStream);
 							statusCheckStatus = joResponse.getInt("statusCode");
-							sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, 0, 0);
+							// To update har table status for showing in New SUM UI
+							// sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, 0, 0);
 						}
 						cnt++;
 					}
