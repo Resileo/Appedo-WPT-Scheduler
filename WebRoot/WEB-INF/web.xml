@@ -50,6 +50,16 @@
 	</servlet-mapping>
 	
 	<servlet>
+		<description>This servlet receives the sum transaction result from client</description>
+		<servlet-name>TransactionResult</servlet-name>
+		<servlet-class>com.appedo.wpt.scheduler.servlet.TransactionResult</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>TransactionResult</servlet-name>
+		<url-pattern>/TransactionResult</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
 		<description>This servlet receives details from client</description>
 		<servlet-name>UpdateAgentDetails</servlet-name>
 		<servlet-class>com.appedo.wpt.scheduler.servlet.UpdateAgentDetails</servlet-class>
