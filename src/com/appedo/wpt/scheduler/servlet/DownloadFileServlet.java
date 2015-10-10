@@ -68,7 +68,7 @@ public class DownloadFileServlet extends HttpServlet {
 		try{
 			// TODO Hardcoded browser and connection details. Need to remove this. 
 			//String strLocation = (request.getParameter("country")+"-"+request.getParameter("state")+"-"+request.getParameter("city")).toUpperCase();
-			String strLocation = (request.getParameter("country")+"-"+"-"+request.getParameter("city")).toUpperCase()+":CHROME.Native";
+			String strLocation = (request.getParameter("country")+"-"+"-"+request.getParameter("city"))+":CHROME.Native";
 			String mac = request.getParameter("mac");
 			//String userId = CryptManager.decodeDecryptURL(request.getParameter("uid"));
 			Object[] oaReturn = (new SUMManager()).getSUMTestForLocation(strLocation, mac);
@@ -89,7 +89,6 @@ public class DownloadFileServlet extends HttpServlet {
 		        response.setHeader("url", sumTestBean.getURL());
 		        response.setHeader("test_type", sumTestBean.getTestType());
 		        response.setHeader("log_id", logId);
-		        
 		        
 		        if( sumTestBean.getTestType().toUpperCase().equals("TRANSACTION") ){
 		        	
