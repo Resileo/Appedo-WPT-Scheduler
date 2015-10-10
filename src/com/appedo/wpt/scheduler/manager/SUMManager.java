@@ -34,10 +34,16 @@ public class SUMManager {
 			// To check expiry and MaxMeasurement Count
 			if ( !getTestStatus(testBean) ) {
 				//for (int i = 0; i < alLocations.size(); i++) {
-					t = new RunTest(testBean.getLocation(), testBean);
-					sumTestIdList.add(t);
-					hmThreads.put(testBean.getTestId(), sumTestIdList);
-					t.start();
+					// check for test type
+					if(testBean.getTestType().equalsIgnoreCase("transaction")){
+						SUMScheduler.queueSUMTest(testBean.getLocation(), testBean);
+					}else{
+						t = new RunTest(testBean.getLocation(), testBean);
+						sumTestIdList.add(t);
+						hmThreads.put(testBean.getTestId(), sumTestIdList);
+						t.start();	
+					}
+					
 				// }
 			}
 		} catch (Exception e) {
@@ -45,7 +51,7 @@ public class SUMManager {
 		} 
 	}
 	
-	public Object[] getSUMTestForLocation(String strLocation, String mac, String userId) {
+	public Object[] getSUMTestForLocation(String strLocation, String mac) {
 		SUMTestBean sumTestBean = null;
 		SUMNodeBean sumNodeBean = null;
 		NodeManager manager = null;
@@ -59,8 +65,8 @@ public class SUMManager {
 			
 			if( sumTestBean != null ) {
 				sumNodeBean = manager.getNodeDetails(con, mac);
-				sumTestBean.setUserId(Integer.parseInt(userId));
-				auditLogBean = manager.insertSUMlog(sumTestBean, sumNodeBean, strLocation, "Agent polled bean from queue");
+			//	sumTestBean.setUserId(Integer.parseInt(userId));
+			//	auditLogBean = manager.insertSUMlog(sumTestBean, sumNodeBean, strLocation, "Agent polled bean from queue");
 			}
 		} catch (Throwable th) {
 			LogManager.errorLog(th);
