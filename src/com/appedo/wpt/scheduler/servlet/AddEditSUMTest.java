@@ -56,8 +56,10 @@ public class AddEditSUMTest extends HttpServlet {
 			
 			for(int i=0; i<alSUMTestBeans.size(); i++){
 				try {
+					LogManager.infoLog("ADDEDIT :"+alSUMTestBeans.get(i));
 					manager.runSUMTests((SUMTestBean) alSUMTestBeans.get(i).clone());
 				} catch (Throwable e1) {
+					e1.printStackTrace();
 					LogManager.errorLog(e1);
 				}
 			}

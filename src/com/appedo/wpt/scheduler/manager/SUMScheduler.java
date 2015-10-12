@@ -22,11 +22,9 @@ public class SUMScheduler {
 				pqSUMLocation = new PriorityBlockingQueue<SUMTestBean>();
 				htSUMLocationTestQueues.put(strLocation, pqSUMLocation);
 			}
-			
 			synchronized ( pqSUMLocation ) {
 				// queue needs to compare this bean with others to find priority
 				testBean.setQueuedOn(new Date());
-//				System.out.println("Scheduling SUM TEST "+strLocation+" <> "+testBean.toJSON());
 				pqSUMLocation.add(testBean);
 				return testBean;
 			}

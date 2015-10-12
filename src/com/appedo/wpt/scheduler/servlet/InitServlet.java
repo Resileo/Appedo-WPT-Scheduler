@@ -75,20 +75,20 @@ public class InitServlet extends HttpServlet {
 			timerSUMScheduler.schedule(timerTaskSUMScheduler, 150, Constants.SCHEDULE_INTERVAL);
 			
 			// SUM Execution Audit log queues
-			NodeManager.createSUMAuditLogQueues();
+			//NodeManager.createSUMAuditLogQueues();
 			
 			// SUM Execution Audit log inserting Threads
-			for(int nLogTimerIndex=0; nLogTimerIndex<10; nLogTimerIndex++){
-				timerAuditLog.schedule(new SUMAuditLogTimerTask(nLogTimerIndex), 500, 1000);
-			}
+			//for(int nLogTimerIndex=0; nLogTimerIndex<10; nLogTimerIndex++){
+			//	timerAuditLog.schedule(new SUMAuditLogTimerTask(nLogTimerIndex), 500, 1000);
+			//}
 			
 			// SUM  Agent Details queues
-			NodeManager.createAgentDetailsQueues();
+			//NodeManager.createAgentDetailsQueues();
 			
 			// SUM Agent Details update Threads
-			for(int nAgentTimerIndex = 0; nAgentTimerIndex < 10; nAgentTimerIndex ++){
+			/*for(int nAgentTimerIndex = 0; nAgentTimerIndex < 10; nAgentTimerIndex ++){
 				timerAgentDetails.schedule(new AgentLogTimerTask(nAgentTimerIndex), 500, 1000);
-			}
+			}*/
 			
 			resetMeasurementCount = new ResetMeasurementTimerTask();
 			timerMeasurementCount.schedule(resetMeasurementCount, getNext1200AM(), 1000*60*60*24);
