@@ -3,29 +3,28 @@ package com.appedo.wpt.scheduler.manager;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.LinkedHashSet;
 
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 
 public class SUMScheduler {
 	
-	private static Hashtable<String, PriorityBlockingQueue<SUMTestBean>> htSUMLocationTestQueues = new Hashtable<String, PriorityBlockingQueue<SUMTestBean>>();
+	private static Hashtable<String, LinkedHashSet<SUMTestBean>> htSUMLocationTestQueues = new Hashtable<String, LinkedHashSet<SUMTestBean>>();
+	
 	
 	public static SUMTestBean queueSUMTest(String strLocation, SUMTestBean testBean) throws Exception {
-		PriorityBlockingQueue<SUMTestBean> pqSUMLocation = null;
-		
+		LinkedHashSet<SUMTestBean> setSUMLoc = null;
 		try {
 			if (htSUMLocationTestQueues.containsKey(strLocation)) {
-				pqSUMLocation = htSUMLocationTestQueues.get(strLocation);
+				setSUMLoc = htSUMLocationTestQueues.get(strLocation);
 			} else {
-				pqSUMLocation = new PriorityBlockingQueue<SUMTestBean>();
-				htSUMLocationTestQueues.put(strLocation, pqSUMLocation);
+				setSUMLoc = new LinkedHashSet<SUMTestBean>();
+				htSUMLocationTestQueues.put(strLocation, setSUMLoc);
 			}
-			synchronized ( pqSUMLocation ) {
-				// queue needs to compare this bean with others to find priority
+			synchronized (setSUMLoc) {
 				testBean.setQueuedOn(new Date());
-				pqSUMLocation.add(testBean);
+				setSUMLoc.add(testBean);
 				return testBean;
 			}
 		} catch (Exception e) {
@@ -35,22 +34,21 @@ public class SUMScheduler {
 	}
 	
 	public static SUMTestBean pollSUMTest(String strLocation) throws Exception {
-		PriorityBlockingQueue<SUMTestBean> pqSUMLocation = null;
+		LinkedHashSet<SUMTestBean> setSUMLoc = null;
 		SUMTestBean sumTestBean = null;
-		
 		try{
 			// a client is available in a location. Add a queue for it; if not available
 			if (htSUMLocationTestQueues.containsKey(strLocation)) {
-				pqSUMLocation = htSUMLocationTestQueues.get(strLocation);
-//				NodeManager nodeManager = new NodeManager();
-//				nodeManager.updateSumlog(pqSUMLocation.element(),strLocation);
+				setSUMLoc = htSUMLocationTestQueues.get(strLocation);
 			} else {
-				pqSUMLocation = new PriorityBlockingQueue<SUMTestBean>();
-				htSUMLocationTestQueues.put(strLocation, pqSUMLocation);
+				setSUMLoc = new LinkedHashSet<SUMTestBean>();
+				htSUMLocationTestQueues.put(strLocation, setSUMLoc);
 			}
 			
-			synchronized ( pqSUMLocation ) {
-				sumTestBean = pqSUMLocation.poll();
+			synchronized ( setSUMLoc ) {
+				sumTestBean = setSUMLoc.iterator().next();
+				//setSUMLoc.iterator().remove();
+				setSUMLoc.remove(sumTestBean);
 				if( sumTestBean != null ){
 				}
 				return sumTestBean;
@@ -62,20 +60,19 @@ public class SUMScheduler {
 	}
 	
 	public static ArrayList<SUMTestBean> drainSUMTest(String strLocation) throws Exception {
-		PriorityBlockingQueue<SUMTestBean> pqSUMLocation = null;
-		
+		LinkedHashSet<SUMTestBean> setSUMLoc = null;
 		try{
 			// a client is available in a location. Add a queue for it; if not available
 			if (htSUMLocationTestQueues.containsKey(strLocation)) {
-				pqSUMLocation = htSUMLocationTestQueues.get(strLocation);
+				setSUMLoc = htSUMLocationTestQueues.get(strLocation);
 			} else {
-				pqSUMLocation = new PriorityBlockingQueue<SUMTestBean>();
-				htSUMLocationTestQueues.put(strLocation, pqSUMLocation);
+				setSUMLoc = new LinkedHashSet<SUMTestBean>();
+				htSUMLocationTestQueues.put(strLocation, setSUMLoc);
 			}
-			
-			synchronized ( pqSUMLocation ) {
-				ArrayList<SUMTestBean> sumTestBeans = new ArrayList<SUMTestBean>();
-				pqSUMLocation.drainTo(sumTestBeans);
+
+			synchronized ( setSUMLoc ) {
+				ArrayList<SUMTestBean> sumTestBeans = new ArrayList<SUMTestBean>(setSUMLoc);
+				setSUMLoc.clear();
 				for(int i=0; i<sumTestBeans.size(); i++){
 				}
 				return sumTestBeans;
