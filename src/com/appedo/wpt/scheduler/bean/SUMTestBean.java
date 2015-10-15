@@ -39,8 +39,8 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private String repeatView;
 	private long slaId;
 	private long slaSumId;
-	private boolean aboveThreashold;
-	private int threasholdValue;
+	private boolean aboveThreshold;
+	private int thresholdValue;
 	private int errorValue;
 	private int minBreachCount;
 		
@@ -273,20 +273,20 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 		this.slaSumId = slaSumId;
 	}
 
-	public boolean isAboveThreashold() {
-		return aboveThreashold;
+	public boolean isAboveThreshold() {
+		return aboveThreshold;
 	}
 
-	public void setAboveThreashold(boolean aboveThreashold) {
-		this.aboveThreashold = aboveThreashold;
+	public void setAboveThreshold(boolean aboveThreshold) {
+		this.aboveThreshold = aboveThreshold;
 	}
 
-	public int getThreasholdValue() {
-		return threasholdValue;
+	public int getThresholdValue() {
+		return thresholdValue;
 	}
 
-	public void setThreasholdValue(int threasholdValue) {
-		this.threasholdValue = threasholdValue;
+	public void setThresholdValue(int thresholdValue) {
+		this.thresholdValue = thresholdValue;
 	}
 
 	public int getErrorValue() {
