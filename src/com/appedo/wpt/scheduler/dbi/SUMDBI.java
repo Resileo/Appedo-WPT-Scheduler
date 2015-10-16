@@ -107,11 +107,11 @@ public class SUMDBI {
 				}
 				
 				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
 				}
 				
 				if( rs.getString("warning")!= null ){
-					testBean.setThreasholdValue(rs.getInt("warning"));
+					testBean.setThresholdValue(rs.getInt("warning"));
 				}
 				
 				if( rs.getString("error")!= null ){
@@ -256,11 +256,11 @@ public class SUMDBI {
 				}
 				
 				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreashold(rs.getBoolean("is_above_threashold"));
+					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
 				}
 				
 				if( rs.getString("warning")!= null ){
-					testBean.setThreasholdValue(rs.getInt("warning"));
+					testBean.setThresholdValue(rs.getInt("warning"));
 				}
 				
 				if( rs.getString("error")!= null ){
@@ -706,7 +706,7 @@ public class SUMDBI {
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally{
-//			LogManager.logMethodEnd(dateLog);
+			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
