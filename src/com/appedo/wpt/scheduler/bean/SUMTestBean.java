@@ -185,8 +185,31 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 		// compareTo should return < 0 if this is supposed to be
         // less than other, > 0 if this is supposed to be greater than 
         // other and 0 if they are supposed to be equal
-    	
     	return ((int) (dateQueuedOn.getTime() - another.getQueuedOn().getTime()));
+	}
+	
+	/* Below method is overridden to check the equality of objects
+	 * (non-Javadoc
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+	    if(o == null) return false;
+	    if(!(o instanceof SUMTestBean)) return false;
+	    SUMTestBean other = (SUMTestBean) o;
+	    String d = "false";
+	    if(this.lTestId == other.lTestId) d="true"; 
+	    System.out.println("EQUALS:"+d);
+	    return this.lTestId == other.lTestId;
+	}
+	
+	/*Below method is overridden to check the equality of objects
+	 * (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return (int)lTestId;
 	}
 	
 	public String getAgentType() {
