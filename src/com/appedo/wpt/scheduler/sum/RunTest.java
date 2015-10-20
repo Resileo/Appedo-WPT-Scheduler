@@ -83,7 +83,7 @@ public class RunTest extends Thread {
 			// method.addParameter("login", "null");
 			// method.addParameter("password", "null");
 			method.addParameter("authType", "0");
-			method.addParameter("video", "0");
+			method.addParameter("video", "1");
 			method.addParameter("f", "json");
 			// method.addParameter("r", "null");
 			// method.addParameter("notify", "null");
