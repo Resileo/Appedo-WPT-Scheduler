@@ -62,6 +62,7 @@ public class RunTest extends Thread {
 	 */
 	public void run() {
 		SUMManager sumManager = null;
+		boolean isDowntime=false;
 		try {
 			sumManager = new SUMManager();
 			// Pushing test to 70.70 server, get response 
@@ -174,6 +175,18 @@ public class RunTest extends Thread {
 								JSONObject jores = JSONObject.fromObject(joResponse.get("response"));
 								if(jores.containsKey("data")){
 									JSONObject joData = JSONObject.fromObject(jores.get("data"));
+									
+									if(joData.containsKey("run")){
+										JSONObject jorun = JSONObject.fromObject(joData.get("run"));
+										if(jorun.containsKey("firstView")){
+											JSONObject joFView = JSONObject.fromObject(jorun.get("firstView"));
+											if(joFView.containsKey("status")){
+												JSONObject jostatus = JSONObject.fromObject(joFView.get("status"));
+											//	System.out.println(jostatus);
+												isDowntime=true;
+											}
+										}
+									}
 									if( joData.containsKey("average") ){
 										JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
 										double repeatLoadTime = 0, firstLoadTime = 0;
@@ -201,8 +214,9 @@ public class RunTest extends Thread {
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
 										if( testBean.getThresholdValue()> 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ){
-											joSLA.put("type", "Warning");
-											System.out.println("json sla :: "+joSLA.toString());
+											joSLA.put("type", firstLoadTime > (testBean.getErrorValue()*1000)?"Error":"Warning");
+									//		System.out.println("json sla :: "+joSLA.toString());
+											LogManager.infoLog("json sla for SUM Alert :: "+joSLA.toString());
 											client = new HttpClient();
 											// URLEncoder.encode(requestUrl,"UTF-8");
 											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
@@ -210,7 +224,21 @@ public class RunTest extends Thread {
 											method.addParameter("sumBreachCounterset", joSLA.toString());
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
-										} else if( testBean.getErrorValue()> 0 && firstLoadTime > (testBean.getErrorValue()*1000) ){
+										}
+										if( testBean.getThresholdValue()> 0 && isDowntime){
+											joSLA.put("type", "Configured Site is Down");
+											joSLA.put("is_Down", isDowntime);
+									//		System.out.println("json sla :: "+joSLA.toString());
+											LogManager.infoLog("json sla for SUM Alert at Downtime:: "+joSLA.toString());
+											client = new HttpClient();
+											// URLEncoder.encode(requestUrl,"UTF-8");
+											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+											method.addParameter("command", "sumBreachCounterSet");
+											method.addParameter("sumBreachCounterset", joSLA.toString());
+//											method.setRequestHeader("Connection", "close");
+											statusCode = client.executeMethod(method);
+										} 
+										/*else if( testBean.getErrorValue()> 0 && firstLoadTime > (testBean.getErrorValue()*1000) ){
 											joSLA.put("type", "Error");
 											System.out.println("json sla :: "+joSLA.toString());
 											client = new HttpClient();
@@ -220,7 +248,7 @@ public class RunTest extends Thread {
 											method.addParameter("sumBreachCounterset", joSLA.toString());
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
-										}
+										}*/
 									}
 									// Insert Json into db
 									sumManager.insertResultJson(joData, harId);
