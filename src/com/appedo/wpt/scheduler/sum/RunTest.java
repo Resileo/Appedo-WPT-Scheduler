@@ -213,6 +213,7 @@ public class RunTest extends Thread {
 										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
+										joSLA.put("is_Down", isDowntime);
 										if( testBean.getThresholdValue()> 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ){
 											joSLA.put("type", firstLoadTime > (testBean.getErrorValue()*1000)?"Error":"Warning");
 									//		System.out.println("json sla :: "+joSLA.toString());
