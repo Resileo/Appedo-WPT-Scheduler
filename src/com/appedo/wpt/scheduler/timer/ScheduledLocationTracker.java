@@ -1,6 +1,7 @@
 package com.appedo.wpt.scheduler.timer;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class ScheduledLocationTracker extends TimerTask {
 		PostMethod method = null;
 		JSONObject joResponse = null;
 		SUMDBI sumdbi = null;
-		Set < String > existingAgents = null, allActiveAgents = null,activeDesktopAgents = null,activeMobileAgents = null,
+		Set < String > existingAgentsFromDb = null, activeAgentsFromDb = null,allActiveAgents = null,activeDesktopAgents = null,activeMobileAgents = null,
 				desktopAgentsToInsert = null,mobileAgentsToInsert = null;
 		
 		try {
@@ -41,7 +42,8 @@ public class ScheduledLocationTracker extends TimerTask {
 			mobileAgentsToInsert = new HashSet < String > ();
 			
 			sumdbi = new SUMDBI();
-			existingAgents = sumdbi.extractexistingloc(con);
+			existingAgentsFromDb = sumdbi.extractExistingAgents(con);
+			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
 			client = new HttpClient();
 
 			//method = new PostMethod("http://23.23.129.228/getLocations.php");
@@ -66,6 +68,34 @@ public class ScheduledLocationTracker extends TimerTask {
 						}
 						allActiveAgents.add(keyStr.split(":")[0]);
 					}
+					
+					// to alert admin/devops when active Agents is inActive
+					for (String strAgent: activeAgentsFromDb) {
+						if (!allActiveAgents.contains(strAgent)) {
+							keyStrbuildr.append("'")
+							.append(strAgent)
+							.append("',");
+						}
+					}
+					keyStrbuildr.deleteCharAt(keyStrbuildr.lastIndexOf(","));
+					String inActiveNodes = keyStrbuildr.toString();
+					
+					if(inActiveNodes.length() > 0 && inActiveNodes!= null){
+						JSONObject joNodes = new JSONObject();
+						joNodes.put("category", "inactive");
+						joNodes.put("locations", inActiveNodes);
+						LogManager.infoLog("json with node names to Alert devops:: "+joNodes.toString());
+						client = new HttpClient();
+						// URLEncoder.encode(requestUrl,"UTF-8");
+						method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+						method.addParameter("command", "inActiveLocations");
+						method.addParameter("inActiveLocations", joNodes.toString());
+						//method.setRequestHeader("Connection", "close");
+						statusCode = client.executeMethod(method);
+						LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
+					}
+					
+					keyStrbuildr.setLength(0);
 					Iterator<String> itr= allActiveAgents.iterator();
 					while(itr.hasNext()){
 						String keyStr = (String) itr.next();
@@ -77,25 +107,36 @@ public class ScheduledLocationTracker extends TimerTask {
 					String activeNodes = keyStrbuildr.toString();
 						//update inactive locations in DB
 						sumdbi.updateInactiveAgents(activeNodes, con);
+						
+					//		String inactiveNodes=sumdbi.getInactiveNodesToAlertDev(con);
 						//Desktop
 						for (String activeDeskloc: activeDesktopAgents) {
-							if (!existingAgents.contains(activeDeskloc)) {
+							if (!existingAgentsFromDb.contains(activeDeskloc)) {
 								desktopAgentsToInsert.add(activeDeskloc);
 							}
 						}
 						//mobile
 						for (String activeMobiloc: activeMobileAgents) {
-							if (!existingAgents.contains(activeMobiloc)) {
+							if (!existingAgentsFromDb.contains(activeMobiloc)) {
 								mobileAgentsToInsert.add(activeMobiloc);
 							}
 						}
 						// To insert new Desktop/Mobile Agents
+						System.out.println(desktopAgentsToInsert.size());
+						
+						System.out.println(mobileAgentsToInsert.size());
+						
 							if (desktopAgentsToInsert.size() > 0) {
 								sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
-							} else {LogManager.infoLog("No Desktop Locations to insert");}
-							if(mobileAgentsToInsert.size() > 0){
+								//to alert admin/devops when active Agents is New 
+								sumdbi.isNodeInserted(con, desktopAgentsToInsert);
+							} else if(mobileAgentsToInsert.size() > 0){
 								sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
-							}else{LogManager.infoLog("No Mobile Locations to insert");}
+								//to alert admin/devops when active Agents is New 
+								sumdbi.isNodeInserted(con, mobileAgentsToInsert);
+							}else{
+								LogManager.infoLog("No Agents to insert");
+								}
 				} else {
 					sumdbi.updateAllAgentsInactive(con);
 					LogManager.infoLog("No locations found in getLocations.php API");
@@ -114,7 +155,7 @@ public class ScheduledLocationTracker extends TimerTask {
 				}
 		}finally{
 			try {
-				existingAgents=null;
+				existingAgentsFromDb=null;
 				allActiveAgents = null;
 				activeDesktopAgents = null;
 				activeMobileAgents = null;

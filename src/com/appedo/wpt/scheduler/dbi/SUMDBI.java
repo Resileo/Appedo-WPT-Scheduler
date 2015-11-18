@@ -817,7 +817,7 @@ public class SUMDBI {
 		}
 	}
 	
-	public HashSet < String > extractexistingloc(Connection con) {
+	public HashSet < String > extractExistingAgents(Connection con) {
 		Date dateLog = LogManager.logMethodStart();
 		HashSet < String > retrivedloc = new HashSet < String > ();
 		ResultSet rs =null;
@@ -840,12 +840,33 @@ public class SUMDBI {
 		return retrivedloc;
 	}
 
+	public HashSet < String > extractActiveAgents(Connection con) {
+		Date dateLog = LogManager.logMethodStart();
+		HashSet < String > retrivedActiveAgents = new HashSet < String > ();
+		ResultSet rs =null;
+		Statement stmt = null;
+		try {
+			stmt = con.createStatement();
+			rs = stmt.executeQuery("select country||'-'||'-'||city as loc from sum_node_details where sum_node_status = 'active'");
+			while (rs.next()) {
+				retrivedActiveAgents.add(rs.getString(1).trim());
+			}
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(rs);
+			rs = null;
+			DataBaseManager.close(stmt);
+			stmt = null;
+		}
+		return retrivedActiveAgents;
+	}
 	public void insertNewDesktopAgents(Connection con, Set < String > locToUpadate) {
-
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmt1 = null;
 		StringBuilder sbQuery = null;
-		long lKeyId = -1;
+		long lKeyId = -1l;
 		Date dateLog = LogManager.logMethodStart();
 		try {
 			for (String locToinsert: locToUpadate) {
@@ -866,7 +887,7 @@ public class SUMDBI {
 				pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 				pstmt.executeUpdate();
 				lKeyId = DataBaseManager.returnKey(pstmt);
-				if(lKeyId != -1){
+				if(lKeyId != -1l){
 					sbQuery.setLength(0);
 					sbQuery.append("INSERT INTO sum_node_device_os_browser_demo (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
 					.append("sum_device_os_browser WHERE node_id =")
@@ -880,6 +901,7 @@ public class SUMDBI {
 				DataBaseManager.close(pstmt1);
 				pstmt = null;
 				pstmt1=null;
+				lKeyId = -1l;
 			}
 			LogManager.infoLog("New WPT_Desktop_Agent Have Been Inserted at "+new Date());
 		} catch (Exception ex) {
@@ -892,11 +914,10 @@ public class SUMDBI {
 	}
 
 		public void insertNewMobileAgents(Connection con, Set < String > locToUpadate) {
-
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmt1 = null;
 			StringBuilder sbQuery = null;
-			long lKeyId = -1;
+			long lKeyId = -1l;
 			Date dateLog = LogManager.logMethodStart();
 			try {
 				for (String locToinsert: locToUpadate) {
@@ -917,7 +938,7 @@ public class SUMDBI {
 					pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 					pstmt.executeUpdate();
 					lKeyId = DataBaseManager.returnKey(pstmt);
-					if(lKeyId != -1){
+					if(lKeyId != -1l){
 						sbQuery.setLength(0);
 						sbQuery.append("INSERT INTO sum_node_device_os_browser_demo (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
 						.append("sum_device_os_browser WHERE node_id =")
@@ -931,6 +952,7 @@ public class SUMDBI {
 					DataBaseManager.close(pstmt1);
 					pstmt = null;
 					pstmt1=null;
+					lKeyId = -1l;
 				}
 				LogManager.infoLog("New WPT_Mobile_Agent Has Been Inserted at "+new Date());
 			} catch (Exception ex) {
@@ -945,6 +967,49 @@ public class SUMDBI {
 			}
 		}
 	
+		public void isNodeInserted(Connection con, Set < String > agentSet) {
+			NodeManager nodeManager=null;
+			Date dateLog = LogManager.logMethodStart();
+			Statement stmtQry = null;
+			ResultSet rstQry = null;
+			StringBuilder sbQuery = null;
+			boolean bReturn = false;
+			try {
+				nodeManager=new NodeManager();
+				for (String strAgent: agentSet) {
+				sbQuery = new StringBuilder();
+				sbQuery.append("SELECT EXISTS (SELECT 1 FROM sum_node_details WHERE country='")
+				.append(strAgent.split("--")[1])
+				.append("' AND city = '")
+				.append(strAgent.split("--")[0])
+				.append(") as is_agent_added");
+				stmtQry = con.createStatement();
+				rstQry = stmtQry.executeQuery(sbQuery.toString());
+				while ( rstQry.next() ){
+						bReturn = rstQry.getBoolean("is_agent_added");
+				}
+				if(bReturn){
+					try {
+						nodeManager.sendAgentDeatilsToAlert(strAgent);
+					} catch (Exception e) {
+						e.printStackTrace();
+						LogManager.errorLog("Error sending to alert "+e);
+					}
+				}
+				sbQuery.setLength(0);
+				UtilsFactory.clearCollectionHieracy( sbQuery );
+				DataBaseManager.close(stmtQry);
+				stmtQry = null;
+				}
+			} catch (Exception ex) {
+				LogManager.errorLog(ex);
+			}finally{
+				LogManager.logMethodEnd(dateLog);
+				DataBaseManager.close(stmtQry);
+				stmtQry = null;
+			}
+		}		
+		
 	public void updateInactiveAgents(String activeLocations, Connection con) {
 		Date dateLog = LogManager.logMethodStart();
 		PreparedStatement pstmt = null;
@@ -952,8 +1017,9 @@ public class SUMDBI {
 		try {
 			sbQuery.append("UPDATE sum_node_details SET sum_node_status = CASE WHEN country||'-'||'-'||city IN(")
 				.append(activeLocations)
-				.append(") THEN 'active' ELSE 'Inactive' END");
-
+				.append(") THEN 'active' ELSE 'Inactive' END,modified_on = CASE WHEN country||'-'||'-'||city IN(")
+				.append(activeLocations)
+				.append(") THEN now() END");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.executeUpdate();
 			LogManager.infoLog("WPT_Agent Status Have Been updated at "+new Date());
@@ -984,6 +1050,29 @@ public class SUMDBI {
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
+	}
+	
+	public String getInactiveNodesToAlertDev(Connection con) {
+		Date dateLog = LogManager.logMethodStart();
+		HashSet < String > retrivedloc = new HashSet < String > ();
+		ResultSet rs =null;
+		Statement stmt = null;
+		try {
+			stmt = con.createStatement();
+			rs = stmt.executeQuery("select country||'-'||'-'||city as loc from sum_node_details where sum_node_status ='Inactive' AND modified_on > now() - interval '1 hour'");
+			while (rs.next()) {
+				retrivedloc.add(rs.getString(1).trim());
+			}
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		}finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(rs);
+			rs = null;
+			DataBaseManager.close(stmt);
+			stmt = null;
+		}
+		return retrivedloc.toString();
 	}
 
 }

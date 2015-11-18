@@ -11,10 +11,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import net.sf.json.JSONObject;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
+
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
+import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
@@ -172,6 +178,35 @@ public class NodeManager {
 		 } finally {
 			 if(reader!=null)
 				 reader.close();
+		 }
+	}
+	
+public void sendAgentDeatilsToAlert(String strLocation) {
+		HttpClient client = null;
+		PostMethod method = null;
+		try {
+			JSONObject joNodes = new JSONObject();
+			joNodes.put("category", "newagent");
+			joNodes.put("locations", strLocation);
+			LogManager.infoLog("json with node names to Alert devops:: "+joNodes.toString());
+			client = new HttpClient();
+			// URLEncoder.encode(requestUrl,"UTF-8");
+			method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+			method.addParameter("command", "inActiveLocations");
+			method.addParameter("inActiveLocations", joNodes.toString());
+			//method.setRequestHeader("Connection", "close");
+			int statusCode = client.executeMethod(method);
+			
+			if (statusCode == HttpURLConnection.HTTP_OK) {
+				LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);
+			} else {
+				LogManager.infoLog("Server returned non-OK code: " + statusCode);
+		    }
+		 } catch (Throwable t) {
+			 LogManager.errorLog(t);
+		 } finally {
+			 if(client!=null)
+				 client=null;
 		 }
 	}
 	
