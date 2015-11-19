@@ -978,49 +978,6 @@ public class SUMDBI {
 				UtilsFactory.clearCollectionHieracy( sbQuery );
 			}
 			return bReturn;
-		}
-	
-		public void isNodeInserted(Connection con, Set < String > agentSet) {
-			NodeManager nodeManager=null;
-			Date dateLog = LogManager.logMethodStart();
-			Statement stmtQry = null;
-			ResultSet rstQry = null;
-			StringBuilder sbQuery = null;
-			boolean bReturn = false;
-			try {
-				nodeManager=new NodeManager();
-				for (String strAgent: agentSet) {
-				sbQuery = new StringBuilder();
-				sbQuery.append("SELECT EXISTS (SELECT 1 FROM sum_node_details WHERE country='")
-				.append(strAgent.split("--")[0])
-				.append("' AND city = '")
-				.append(strAgent.split("--")[1])
-				.append("') as is_agent_added");
-				stmtQry = con.createStatement();
-				rstQry = stmtQry.executeQuery(sbQuery.toString());
-				while ( rstQry.next() ){
-						bReturn = rstQry.getBoolean("is_agent_added");
-				}
-				if(bReturn){
-					try {
-						nodeManager.sendAgentDeatilsToAlert(strAgent);
-					} catch (Exception e) {
-						e.printStackTrace();
-						LogManager.errorLog("Error sending to alert "+e);
-					}
-				}
-				sbQuery.setLength(0);
-				UtilsFactory.clearCollectionHieracy( sbQuery );
-				DataBaseManager.close(stmtQry);
-				stmtQry = null;
-				}
-			} catch (Exception ex) {
-				LogManager.errorLog(ex);
-			}finally{
-				LogManager.logMethodEnd(dateLog);
-				DataBaseManager.close(stmtQry);
-				stmtQry = null;
-			}
 		}		
 		
 	public void updateInactiveAgents(String activeLocations, Connection con) {
@@ -1063,29 +1020,6 @@ public class SUMDBI {
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
-	}
-	
-	public String getInactiveNodesToAlertDev(Connection con) {
-		Date dateLog = LogManager.logMethodStart();
-		HashSet < String > retrivedloc = new HashSet < String > ();
-		ResultSet rs =null;
-		Statement stmt = null;
-		try {
-			stmt = con.createStatement();
-			rs = stmt.executeQuery("select country||'-'||'-'||city as loc from sum_node_details where sum_node_status ='Inactive' AND modified_on > now() - interval '1 hour'");
-			while (rs.next()) {
-				retrivedloc.add(rs.getString(1).trim());
-			}
-		} catch (Exception e) {
-			LogManager.errorLog(e);
-		}finally{
-			LogManager.logMethodEnd(dateLog);
-			DataBaseManager.close(rs);
-			rs = null;
-			DataBaseManager.close(stmt);
-			stmt = null;
-		}
-		return retrivedloc.toString();
 	}
 
 }
