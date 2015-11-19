@@ -862,11 +862,12 @@ public class SUMDBI {
 		}
 		return retrivedActiveAgents;
 	}
-	public void insertNewDesktopAgents(Connection con, Set < String > locToUpadate) {
+	public boolean insertNewDesktopAgents(Connection con, Set < String > locToUpadate) {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmt1 = null;
 		StringBuilder sbQuery = null;
 		long lKeyId = -1l;
+		boolean bReturn=false;
 		Date dateLog = LogManager.logMethodStart();
 		try {
 			for (String locToinsert: locToUpadate) {
@@ -889,12 +890,15 @@ public class SUMDBI {
 				lKeyId = DataBaseManager.returnKey(pstmt);
 				if(lKeyId != -1l){
 					sbQuery.setLength(0);
-					sbQuery.append("INSERT INTO sum_node_device_os_browser_demo (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
+					sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
 					.append("sum_device_os_browser WHERE node_id =")
 					.append(lKeyId)
 					.append(" AND dob_id IN (select dob_id from sum_device_os_browser where device_type='DESKTOP')");
 					pstmt1 = con.prepareStatement(sbQuery.toString());
-					pstmt1.executeUpdate();
+					int count = pstmt1.executeUpdate();
+					if(count > 0){
+						bReturn = true;
+					}
 				}
 				UtilsFactory.clearCollectionHieracy( sbQuery );
 				DataBaseManager.close(pstmt);
@@ -909,15 +913,20 @@ public class SUMDBI {
 		}finally{
 			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);
+			DataBaseManager.close(pstmt1);
 			pstmt = null;
+			pstmt1=null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
+		return bReturn;
 	}
 
-		public void insertNewMobileAgents(Connection con, Set < String > locToUpadate) {
+		public boolean insertNewMobileAgents(Connection con, Set < String > locToUpadate) {
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmt1 = null;
 			StringBuilder sbQuery = null;
 			long lKeyId = -1l;
+			boolean bReturn=false;
 			Date dateLog = LogManager.logMethodStart();
 			try {
 				for (String locToinsert: locToUpadate) {
@@ -940,12 +949,15 @@ public class SUMDBI {
 					lKeyId = DataBaseManager.returnKey(pstmt);
 					if(lKeyId != -1l){
 						sbQuery.setLength(0);
-						sbQuery.append("INSERT INTO sum_node_device_os_browser_demo (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
+						sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
 						.append("sum_device_os_browser WHERE node_id =")
 						.append(lKeyId)
 						.append(" AND dob_id IN (select dob_id from sum_device_os_browser where device_type='MOBILE')");
 						pstmt1 = con.prepareStatement(sbQuery.toString());
-						pstmt1.executeUpdate();
+						int count = pstmt1.executeUpdate();
+						if(count > 0){
+							bReturn = true;
+						}
 					}
 					UtilsFactory.clearCollectionHieracy( sbQuery );
 					DataBaseManager.close(pstmt);
@@ -965,6 +977,7 @@ public class SUMDBI {
 				pstmt1=null;
 				UtilsFactory.clearCollectionHieracy( sbQuery );
 			}
+			return bReturn;
 		}
 	
 		public void isNodeInserted(Connection con, Set < String > agentSet) {
@@ -979,10 +992,10 @@ public class SUMDBI {
 				for (String strAgent: agentSet) {
 				sbQuery = new StringBuilder();
 				sbQuery.append("SELECT EXISTS (SELECT 1 FROM sum_node_details WHERE country='")
-				.append(strAgent.split("--")[1])
-				.append("' AND city = '")
 				.append(strAgent.split("--")[0])
-				.append(") as is_agent_added");
+				.append("' AND city = '")
+				.append(strAgent.split("--")[1])
+				.append("') as is_agent_added");
 				stmtQry = con.createStatement();
 				rstQry = stmtQry.executeQuery(sbQuery.toString());
 				while ( rstQry.next() ){

@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -30,20 +31,25 @@ public class ScheduledLocationTracker extends TimerTask {
 		HttpClient client = null;
 		PostMethod method = null;
 		JSONObject joResponse = null;
+		JSONObject joNodeAlert = null;
+		JSONArray jaInActivenodes = null;
 		SUMDBI sumdbi = null;
-		Set < String > existingAgentsFromDb = null, activeAgentsFromDb = null,allActiveAgents = null,activeDesktopAgents = null,activeMobileAgents = null,
+		Set < String > existingAgentsFromDb = null, activeAgentsFromDb = null,allActiveAgentsInApi = null,activeDesktopAgents = null,activeMobileAgents = null,
 				desktopAgentsToInsert = null,mobileAgentsToInsert = null;
 		
 		try {
-			allActiveAgents = new HashSet < String > ();
+			allActiveAgentsInApi = new HashSet < String > ();
 			activeDesktopAgents = new HashSet < String > ();
 			activeMobileAgents = new HashSet < String > ();
 			desktopAgentsToInsert = new HashSet < String > ();
 			mobileAgentsToInsert = new HashSet < String > ();
 			
 			sumdbi = new SUMDBI();
+			joNodeAlert = new JSONObject();
+			jaInActivenodes = new JSONArray();
 			existingAgentsFromDb = sumdbi.extractExistingAgents(con);
 			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
+			StringBuilder keyStrbuildr = null;
 			client = new HttpClient();
 
 			//method = new PostMethod("http://23.23.129.228/getLocations.php");
@@ -55,7 +61,7 @@ public class ScheduledLocationTracker extends TimerTask {
 			String responseStream = method.getResponseBodyAsString();
 
 			if (statusCode == HttpURLConnection.HTTP_OK && responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
-				StringBuilder keyStrbuildr = new StringBuilder();
+				keyStrbuildr = new StringBuilder();
 				joResponse = JSONObject.fromObject(responseStream);
 				if (!joResponse.getString("data").equals("[]")) {
 					JSONObject locationresp = (JSONObject) joResponse.get("data");
@@ -66,37 +72,20 @@ public class ScheduledLocationTracker extends TimerTask {
 						}else if(keyStr.split(":").length==1){
 							activeMobileAgents.add(keyStr.split(":")[0]);
 						}
-						allActiveAgents.add(keyStr.split(":")[0]);
+						allActiveAgentsInApi.add(keyStr.split(":")[0]);
 					}
 					
-					// to alert admin/devops when active Agents is inActive
+					// to alert admin/devops when active Agents are inActive
 					for (String strAgent: activeAgentsFromDb) {
-						if (!allActiveAgents.contains(strAgent)) {
-							keyStrbuildr.append("'")
-							.append(strAgent)
-							.append("',");
+						if (!allActiveAgentsInApi.contains(strAgent)) {
+							jaInActivenodes.add(strAgent);
 						}
 					}
-					keyStrbuildr.deleteCharAt(keyStrbuildr.lastIndexOf(","));
-					String inActiveNodes = keyStrbuildr.toString();
-					
-					if(inActiveNodes.length() > 0 && inActiveNodes!= null){
-						JSONObject joNodes = new JSONObject();
-						joNodes.put("category", "inactive");
-						joNodes.put("locations", inActiveNodes);
-						LogManager.infoLog("json with node names to Alert devops:: "+joNodes.toString());
-						client = new HttpClient();
-						// URLEncoder.encode(requestUrl,"UTF-8");
-						method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-						method.addParameter("command", "inActiveLocations");
-						method.addParameter("inActiveLocations", joNodes.toString());
-						//method.setRequestHeader("Connection", "close");
-						statusCode = client.executeMethod(method);
-						LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
+					if(jaInActivenodes.size() != 0 && jaInActivenodes !=null){
+						joNodeAlert.put("inactive_nodes", jaInActivenodes.toString());
 					}
 					
-					keyStrbuildr.setLength(0);
-					Iterator<String> itr= allActiveAgents.iterator();
+					Iterator<String> itr= allActiveAgentsInApi.iterator();
 					while(itr.hasNext()){
 						String keyStr = (String) itr.next();
 						keyStrbuildr.append("'")
@@ -108,7 +97,6 @@ public class ScheduledLocationTracker extends TimerTask {
 						//update inactive locations in DB
 						sumdbi.updateInactiveAgents(activeNodes, con);
 						
-					//		String inactiveNodes=sumdbi.getInactiveNodesToAlertDev(con);
 						//Desktop
 						for (String activeDeskloc: activeDesktopAgents) {
 							if (!existingAgentsFromDb.contains(activeDeskloc)) {
@@ -122,21 +110,38 @@ public class ScheduledLocationTracker extends TimerTask {
 							}
 						}
 						// To insert new Desktop/Mobile Agents
-						System.out.println(desktopAgentsToInsert.size());
-						
-						System.out.println(mobileAgentsToInsert.size());
-						
 							if (desktopAgentsToInsert.size() > 0) {
-								sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
-								//to alert admin/devops when active Agents is New 
-								sumdbi.isNodeInserted(con, desktopAgentsToInsert);
-							} else if(mobileAgentsToInsert.size() > 0){
-								sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
-								//to alert admin/devops when active Agents is New 
-								sumdbi.isNodeInserted(con, mobileAgentsToInsert);
-							}else{
-								LogManager.infoLog("No Agents to insert");
+								boolean desktopAgentsAdded = false;
+								desktopAgentsAdded = sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
+								if(desktopAgentsAdded){
+									joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were updated in database");
+								}else{
+									joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were not updated in database");
 								}
+								LogManager.infoLog("New Desktop Agents "+ desktopAgentsToInsert.toString());
+							}
+							if(mobileAgentsToInsert.size() > 0){
+								boolean mobileAgentsAdded = false;
+								mobileAgentsAdded = sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
+								if(mobileAgentsAdded){
+									joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were updated in database");
+								}else{
+									joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were not updated in database");
+								}
+								LogManager.infoLog("New Desktop Agents "+ mobileAgentsToInsert.toString());
+							}
+							//to alert admin/devops when active Agents are New /inactive
+							if(joNodeAlert.size() > 0 && joNodeAlert != null){
+								LogManager.infoLog("json with node names to Alert devops:: "+joNodeAlert.toString());
+								client = new HttpClient();
+								// URLEncoder.encode(requestUrl,"UTF-8");
+								method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+								method.addParameter("command", "inActiveLocations");
+								method.addParameter("inActiveLocations", joNodeAlert.toString());
+								//method.setRequestHeader("Connection", "close");
+								statusCode = client.executeMethod(method);
+								LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
+							}	
 				} else {
 					sumdbi.updateAllAgentsInactive(con);
 					LogManager.infoLog("No locations found in getLocations.php API");
@@ -156,7 +161,8 @@ public class ScheduledLocationTracker extends TimerTask {
 		}finally{
 			try {
 				existingAgentsFromDb=null;
-				allActiveAgents = null;
+				allActiveAgentsInApi = null;
+				activeAgentsFromDb=null;
 				activeDesktopAgents = null;
 				activeMobileAgents = null;
 				desktopAgentsToInsert=null;
