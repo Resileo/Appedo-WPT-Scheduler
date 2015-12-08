@@ -43,6 +43,7 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private int thresholdValue;
 	private int errorValue;
 	private int minBreachCount;
+	private boolean downTimeAlert;
 		
 	private Date dateQueuedOn = null;
 	
@@ -326,5 +327,13 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 
 	public void setMinBreachCount(int minBreachCount) {
 		this.minBreachCount = minBreachCount;
+	}
+
+	public boolean isDownTimeAlert() {
+		return downTimeAlert;
+	}
+
+	public void setDownTimeAlert(boolean downTimeAlert) {
+		this.downTimeAlert = downTimeAlert;
 	}
 }

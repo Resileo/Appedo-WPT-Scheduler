@@ -226,7 +226,7 @@ public class RunTest extends Thread {
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
 										}
-										if( testBean.getThresholdValue()> 0 && isDowntime){
+										if( testBean.getThresholdValue()> 0 && isDowntime && testBean.isDownTimeAlert()){
 											joSLA.put("type", "Configured Site is Down");
 											joSLA.put("is_Down", isDowntime);
 									//		System.out.println("json sla :: "+joSLA.toString());
