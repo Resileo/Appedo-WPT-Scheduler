@@ -226,7 +226,7 @@ public class RunTest extends Thread {
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
 										}
-										if( testBean.getThresholdValue()> 0 && isDowntime && testBean.isDownTimeAlert()){
+										if( isDowntime && testBean.isDownTimeAlert()){
 											joSLA.put("type", "Configured Site is Down");
 											joSLA.put("is_Down", isDowntime);
 									//		System.out.println("json sla :: "+joSLA.toString());
@@ -234,7 +234,7 @@ public class RunTest extends Thread {
 											client = new HttpClient();
 											// URLEncoder.encode(requestUrl,"UTF-8");
 											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-											method.addParameter("command", "sumBreachCounterSet");
+											method.addParameter("command", "sumDownTimeAlert");
 											method.addParameter("sumBreachCounterset", joSLA.toString());
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
