@@ -54,6 +54,7 @@ public class TransactionResult extends HttpServlet {
 		int statusCode = -1;
 		String responseStream = "";
 		JSONObject joResponse = null;
+		boolean isDowntime = false;
 		try {
 			con = DataBaseManager.giveConnection();
 			long test_id = Long.valueOf(request.getParameter("testid"));
@@ -107,6 +108,7 @@ public class TransactionResult extends HttpServlet {
 						JSONObject jores = JSONObject.fromObject(joResponse.get("response"));
 						if(jores.containsKey("data")){
 							JSONObject joData = JSONObject.fromObject(jores.get("data"));
+							
 							if( joData.containsKey("average") ){
 								JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
 								double repeatLoadTime = 0, firstLoadTime = 0;
@@ -118,31 +120,28 @@ public class TransactionResult extends HttpServlet {
 									JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
 									repeatLoadTime = joRepeatView.getInt("loadTime");
 								} 
+								if( joAverage.get("firstView").equals("") ){
+									isDowntime = true;
+								}
 								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
-								/*
+								
 								// SLA 
 								JSONObject joSLA = new JSONObject();
-								if( testBean.getThreasholdValue()> 0 && firstLoadTime > (testBean.getThreasholdValue()*1000) ){
-									joSLA.put("sla_id", testBean.getSlaId());
-									joSLA.put("userid", testBean.getUserId());
-									joSLA.put("sla_sum_id", testBean.getSlaSumId());
+								if( isDowntime ){
 									joSLA.put("sum_test_id", test_id);
+									joSLA.put("location", location);
 									joSLA.put("har_id", harId);
-									joSLA.put("is_above", testBean.isAboveThreashold());
-									joSLA.put("threshold_set_value", testBean.getThreasholdValue());	
-									joSLA.put("err_set_value", testBean.getErrorValue());
 									joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
-									joSLA.put("min_breach_count", testBean.getMinBreachCount());
-									joSLA.put("location", strLocation.split(":")[0]);
-									System.out.println("json sla :: "+joSLA.toString());
+									joSLA.put("type", "Configured Site is Down");
+									joSLA.put("is_Down", isDowntime);
+									LogManager.infoLog("json sla for SUM Alert at Downtime:: "+joSLA.toString());
 									client = new HttpClient();
 									// URLEncoder.encode(requestUrl,"UTF-8");
 									method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-									method.addParameter("command", "sumBreachCounterSet");
+									method.addParameter("command", "sumDownTimeAlert");
 									method.addParameter("sumBreachCounterset", joSLA.toString());
-//									method.setRequestHeader("Connection", "close");
 									statusCode = client.executeMethod(method);
-								}*/
+								}
 							}
 							// Insert Json into db
 							sumManager.insertResultJson(joData, harId);
