@@ -68,7 +68,7 @@ public class InitServlet extends HttpServlet {
 //			timerNodeInactive.schedule(timerTaskNodeInactive, 500, Constants.TIMER_PERIOD * 1000);
         	
 			timerTaskNodeactive = new ScheduledLocationTracker();
-			timerNodeActive.schedule(timerTaskNodeactive, 100, 1000 * 60 * 3);
+			timerNodeActive.schedule(timerTaskNodeactive, 300, 1000 * 60 * 3);
         	
 			
 			timerTaskSUMScheduler = new SUMSchedulerTimerTask();

@@ -51,6 +51,9 @@ public class ScheduledLocationTracker extends TimerTask {
 			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
 			StringBuilder keyStrbuildr = null;
 			client = new HttpClient();
+			
+			LogManager.infoLog(" frequent mail triggered in test environment : existingAgentsFromDb :"+existingAgentsFromDb);
+			LogManager.infoLog(" frequent mail triggered in test environment : activeAgentsFromDb :"+activeAgentsFromDb);
 
 			//method = new PostMethod("http://23.23.129.228/getLocations.php");
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"getLocations.php");
@@ -75,7 +78,7 @@ public class ScheduledLocationTracker extends TimerTask {
 						allActiveAgentsInApi.add(keyStr.split(":")[0]);
 					}
 					
-					// to alert admin/devops when active Agents are inActive
+					// To alert admin/devops when active Agents are inActive
 					for (String strAgent: activeAgentsFromDb) {
 						if (!allActiveAgentsInApi.contains(strAgent)) {
 							jaInActivenodes.add(strAgent);
@@ -103,7 +106,7 @@ public class ScheduledLocationTracker extends TimerTask {
 								desktopAgentsToInsert.add(activeDeskloc);
 							}
 						}
-						//mobile
+						//Mobile
 						for (String activeMobiloc: activeMobileAgents) {
 							if (!existingAgentsFromDb.contains(activeMobiloc)) {
 								mobileAgentsToInsert.add(activeMobiloc);
@@ -111,6 +114,7 @@ public class ScheduledLocationTracker extends TimerTask {
 						}
 						// To insert new Desktop/Mobile Agents
 							if (desktopAgentsToInsert.size() > 0) {
+								LogManager.infoLog(" frequent mail triggered in test environment : desktopAgentsToInsert :"+desktopAgentsToInsert);
 								boolean desktopAgentsAdded = false;
 								desktopAgentsAdded = sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
 								if(desktopAgentsAdded){
@@ -128,7 +132,7 @@ public class ScheduledLocationTracker extends TimerTask {
 								}else{
 									joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were not updated in database");
 								}
-								LogManager.infoLog("New Desktop Agents "+ mobileAgentsToInsert.toString());
+								LogManager.infoLog("New Mobile Agents "+ mobileAgentsToInsert.toString());
 							}
 							//to alert admin/devops when active Agents are New /inactive
 							if(joNodeAlert.size() > 0 && joNodeAlert != null){
