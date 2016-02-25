@@ -826,7 +826,7 @@ public class SUMDBI {
 		Statement stmt = null;
 		try {
 			stmt = con.createStatement();
-			rs = stmt.executeQuery("select country||'-'||'-'||city as loc from sum_node_details;");
+			rs = stmt.executeQuery("SELECT country||'-'||'-'||city AS loc FROM sum_node_details");
 			while (rs.next()) {
 				retrivedloc.add(rs.getString(1).trim());
 			}
@@ -886,16 +886,22 @@ public class SUMDBI {
 					.append(locToinsert.split("--")[0])
 					.append("','0.0','0.0','NA','NA','NA','NA','Windows','windows server 2008 r2','3.13.0-32-generic'")
 					.append(",'NA',-1,now(),'active','null-1.0.13')");
-				//pstmt = con.prepareStatement(sbQuery.toString());
+				
+				LogManager.infoLog("frequent mail triggered in test environment : Insert query 1 "+sbQuery.toString());
+				
 				pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 				pstmt.executeUpdate();
 				lKeyId = DataBaseManager.returnKey(pstmt);
+
+
 				if(lKeyId != -1l){
 					sbQuery.setLength(0);
 					sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
 					.append("sum_device_os_browser WHERE node_id =")
 					.append(lKeyId)
 					.append(" AND dob_id IN (select dob_id from sum_device_os_browser where device_type='DESKTOP')");
+
+					LogManager.infoLog("frequent mail triggered in test environment : Insert query 1 "+sbQuery.toString());
 					pstmt1 = con.prepareStatement(sbQuery.toString());
 					int count = pstmt1.executeUpdate();
 					if(count > 0){
