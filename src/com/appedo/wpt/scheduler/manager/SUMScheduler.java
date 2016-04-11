@@ -3,6 +3,7 @@ package com.appedo.wpt.scheduler.manager;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 import com.appedo.manager.LogManager;
@@ -13,24 +14,45 @@ public class SUMScheduler {
 	private static Hashtable<String, LinkedHashSet<SUMTestBean>> htSUMLocationTestQueues = new Hashtable<String, LinkedHashSet<SUMTestBean>>();
 	
 	
-	public static SUMTestBean queueSUMTest(String strLocation, SUMTestBean testBean) throws Exception {
+	public static boolean queueSUMTest(String strLocation, SUMTestBean testBean) throws Exception {
 		LinkedHashSet<SUMTestBean> setSUMLoc = null;
+		Iterator<SUMTestBean> iterSUMTests = null;
+		SUMTestBean sumTestBean = null;
+		
+		boolean bReturn = false;
+		
 		try {
-			if (htSUMLocationTestQueues.containsKey(strLocation)) {
-				setSUMLoc = htSUMLocationTestQueues.get(strLocation);
-			} else {
-				setSUMLoc = new LinkedHashSet<SUMTestBean>();
-				htSUMLocationTestQueues.put(strLocation, setSUMLoc);
+			// Get the HashSet of the location
+			synchronized (htSUMLocationTestQueues) {
+				if (htSUMLocationTestQueues.containsKey(strLocation)) {
+					setSUMLoc = htSUMLocationTestQueues.get(strLocation);
+				} else {
+					setSUMLoc = new LinkedHashSet<SUMTestBean>();
+					htSUMLocationTestQueues.put(strLocation, setSUMLoc);
+				}
 			}
+			
+			// Queue the TestBean
 			synchronized (setSUMLoc) {
 				testBean.setQueuedOn(new Date());
-				setSUMLoc.add(testBean);
-				return testBean;
+				
+				// verify whether the Test is already Queued, within last 2 minutes
+				iterSUMTests = setSUMLoc.iterator();
+				while( iterSUMTests.hasNext() ) {
+					sumTestBean = iterSUMTests.next();
+					
+					if( testBean.getTestId() == sumTestBean.getTestId() 			// Check whether same Test is available in the Queue
+							&& testBean.getQueuedOn().getTime() > (sumTestBean.getQueuedOn().getTime() + 120000l) ) {	// Check for the Queued time.
+						bReturn = setSUMLoc.add(testBean);
+					}
+				}
 			}
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 			throw e;
 		}
+		
+		return bReturn;
 	}
 	
 	public static SUMTestBean pollSUMTest(String strLocation) throws Exception {

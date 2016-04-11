@@ -200,16 +200,20 @@ public class SUMDBI {
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
 		
 		try{
-			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
 					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
-					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
-					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id  where status=")
-					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
-					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
+					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert ")
+					.append("FROM sum_test_master t ")
+					.append("INNER JOIN sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
+					.append("LEFT JOIN sum_connectivity sc on sc.connection_id = t.connection_id ")
+					.append("LEFT JOIN sum_test_device_os_browser st on st.sum_test_id = sm.test_id ")
+					.append("LEFT JOIN sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("LEFT JOIN so_sla_sum sla on sla.sum_test_id = sm.test_id ")
+					.append("WHERE status=").append(status)
+					.append(" AND t.test_id=").append(test_id).append(" AND is_delete = false AND start_date <= now() AND end_date >= now() ")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS INTERVAL) <= now() ")
+					.append("ORDER BY start_date ASC");
 					//.append("and testtype = 'URL' and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(sbQuery.toString());
