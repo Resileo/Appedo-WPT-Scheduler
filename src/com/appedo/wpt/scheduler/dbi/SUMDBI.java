@@ -46,21 +46,24 @@ public class SUMDBI {
 		Date dateLog = LogManager.logMethodStart();
 		
 		try{
-			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
 					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
-					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
-					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id ")
-					//.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() and testtype = 'URL' ")
-					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now()")
-					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
-			System.out.println("Query"+sbQuery.toString());
+					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert ")
+					.append("FROM sum_test_master t ")
+					.append("INNER JOIN sum_test_cluster_mapping sm ON sm.test_id = t.test_id ")
+					.append("LEFT JOIN sum_connectivity sc ON sc.connection_id = t.connection_id ")
+					.append("LEFT JOIN sum_test_device_os_browser st ON st.sum_test_id = sm.test_id ")
+					.append("LEFT JOIN sum_device_os_browser os ON st.device_os_browser_id = os.dob_id ")
+					.append("LEFT JOIN so_sla_sum sla ON sla.sum_test_id = sm.test_id ")
+					//.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now() AND testtype = 'URL' ")
+					.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now()")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS Interval) <= now() ")
+					.append("ORDER BY start_date ASC");
+			// System.out.println("Query"+sbQuery.toString());
+			
 			pstmt = con.prepareStatement(sbQuery.toString());
 			rs = pstmt.executeQuery();
-			rumTestBeans.clear();
 			// Timer 
 			while (rs.next()) {
 				SUMTestBean testBean = new SUMTestBean();
@@ -130,7 +133,6 @@ public class SUMDBI {
 //				testBean.setTargetLocations(a);
 				rumTestBeans.add(testBean);
 				// manager.runRUMTests(testBean);
-				
 			}
 		} catch (Throwable ex) {
 			LogManager.errorLog(ex);
