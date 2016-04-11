@@ -170,7 +170,7 @@ public class RunTest extends Thread {
 						responseStream = method.getResponseBodyAsString();
 						org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
 						
-						// TODO Karthick, Ramkumar what is the response for stopped servers; Send SLA
+						// TODO what is the response for stopped servers; Send SLA
 						
 						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
 							joResponse = JSONObject.fromObject(xmlJSONObj.toString());
