@@ -49,7 +49,7 @@ public class SUMDBI {
 			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
 					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert ")
+					.append("sla.sum_type, t.warning, t.error, t.rm_min_breach_count, t.downtime_alert ")
 					.append("FROM sum_test_master t ")
 					.append("INNER JOIN sum_test_cluster_mapping sm ON sm.test_id = t.test_id ")
 					.append("LEFT JOIN sum_connectivity sc ON sc.connection_id = t.connection_id ")
@@ -58,7 +58,7 @@ public class SUMDBI {
 					.append("LEFT JOIN so_sla_sum sla ON sla.sum_test_id = sm.test_id ")
 					//.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now() AND testtype = 'URL' ")
 					.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now()")
-					.append("AND last_run_detail+CAST(runevery||' minute' AS Interval) <= now() ")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS Interval) <= now() AND sla.sum_type = 'RESPONSE_MONITORING' ")
 					.append("ORDER BY start_date ASC");
 			// System.out.println("Query"+sbQuery.toString());
 			
@@ -90,7 +90,7 @@ public class SUMDBI {
 				if( rs.getString("packet_loss")!= null ) {
 					testBean.setPacketLoss(String.valueOf(rs.getInt("packet_loss")));
 				}
-				
+
 				if(rs.getString("browser_name")!=null){
 					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
@@ -102,7 +102,7 @@ public class SUMDBI {
 					testBean.setLocation(rs.getString("location"));
 				}
 				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
-				
+
 				if( rs.getString("sla_id")!= null ){
 					testBean.setSlaId(rs.getLong("sla_id"));
 				}
@@ -110,11 +110,7 @@ public class SUMDBI {
 				if( rs.getString("sla_sum_id")!= null ){
 					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
 				}
-				
-				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
-				}
-				
+
 				if( rs.getString("warning")!= null ){
 					testBean.setThresholdValue(rs.getInt("warning"));
 				}
@@ -123,8 +119,8 @@ public class SUMDBI {
 					testBean.setErrorValue(rs.getInt("error"));
 				}
 				
-				if( rs.getString("min_breach_count")!= null ){
-					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+				if( rs.getString("rm_min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("rm_min_breach_count"));
 				}
 				
 				// testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
@@ -203,7 +199,7 @@ public class SUMDBI {
 			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
 					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert ")
+					.append("sla.sum_type, t.warning, t.error, t.rm_min_breach_count, t.downtime_alert ")
 					.append("FROM sum_test_master t ")
 					.append("INNER JOIN sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
 					.append("LEFT JOIN sum_connectivity sc on sc.connection_id = t.connection_id ")
@@ -212,7 +208,7 @@ public class SUMDBI {
 					.append("LEFT JOIN so_sla_sum sla on sla.sum_test_id = sm.test_id ")
 					.append("WHERE status=").append(status)
 					.append(" AND t.test_id=").append(test_id).append(" AND is_delete = false AND start_date <= now() AND end_date >= now() ")
-					.append("AND last_run_detail+CAST(runevery||' minute' AS INTERVAL) <= now() ")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS INTERVAL) <= now() AND sla.sum_type = 'RESPONSE_MONITORING' ")
 					.append("ORDER BY start_date ASC");
 					//.append("and testtype = 'URL' and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
@@ -259,25 +255,21 @@ public class SUMDBI {
 				if( rs.getString("sla_id")!= null ){
 					testBean.setSlaId(rs.getLong("sla_id"));
 				}
-				
+
 				if( rs.getString("sla_sum_id")!= null ){
 					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
 				}
-				
-				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
-				}
-				
+
 				if( rs.getString("warning")!= null ){
 					testBean.setThresholdValue(rs.getInt("warning"));
 				}
-				
+
 				if( rs.getString("error")!= null ){
 					testBean.setErrorValue(rs.getInt("error"));
 				}
-				
-				if( rs.getString("min_breach_count")!= null ){
-					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+
+				if( rs.getString("rm_min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("rm_min_breach_count"));
 				}
 				//testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 				rumTestBeans.add(testBean);
