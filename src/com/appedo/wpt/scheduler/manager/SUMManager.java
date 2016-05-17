@@ -29,22 +29,18 @@ public class SUMManager {
 		
 		try {
 			RunTest t;
-			// ArrayList<String> alLocations = testBean.getTargetLocationsArrayList();
 			
 			// To check expiry and MaxMeasurement Count
 			if ( !getTestStatus(testBean) ) {
-				//for (int i = 0; i < alLocations.size(); i++) {
-					// check for test type
-					if(testBean.getTestType().equalsIgnoreCase("transaction")){
-						SUMScheduler.queueSUMTest(testBean.getLocation(), testBean);
-					}else{
-						t = new RunTest(testBean.getLocation(), testBean);
-						sumTestIdList.add(t);
-						hmThreads.put(testBean.getTestId(), sumTestIdList);
-						t.start();	
-					}
-					
-				// }
+				// check for test type
+				if(testBean.getTestType().equalsIgnoreCase("transaction")){
+					SUMScheduler.queueSUMTest(testBean.getLocation(), testBean);
+				} else {
+					t = new RunTest(testBean.getLocation(), testBean);
+					sumTestIdList.add(t);
+					hmThreads.put(testBean.getTestId(), sumTestIdList);
+					t.start();	
+				}
 			}
 		} catch (Exception e) {
 			LogManager.errorLog(e);
@@ -78,6 +74,12 @@ public class SUMManager {
 		return new Object[]{sumTestBean, auditLogBean};
 	}
 	
+	/**
+	 * Check User Expiry and MaxMeasurement Count
+	 * 
+	 * @param testBean
+	 * @return
+	 */
 	public boolean getTestStatus(SUMTestBean testBean){
 		Connection con = null;
 		SUMDBI sumdbi = null;

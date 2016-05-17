@@ -53,9 +53,11 @@ public class InitServlet extends HttpServlet {
 			String strConstantsFilePath = context.getInitParameter("CONSTANTS_PROPERTIES_FILE_PATH");
 			String strLog4jFilePath = context.getInitParameter("LOG4J_PROPERTIES_FILE_PATH");
 			Constants.CONSTANTS_FILE_PATH = InitServlet.realPath+strConstantsFilePath;
-			Constants.LOG4J_PROPERTIES_FILE = InitServlet.realPath+strLog4jFilePath;
+			
 			// Loads log4j configuration properties
+			Constants.LOG4J_PROPERTIES_FILE = InitServlet.realPath+strLog4jFilePath;
 			LogManager.initializePropertyConfigurator(Constants.LOG4J_PROPERTIES_FILE);
+			
 			// Loads Constant properties 
 			Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
 			
