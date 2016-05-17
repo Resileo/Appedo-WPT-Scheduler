@@ -215,6 +215,7 @@ public class RunTest extends Thread {
 										joSLA.put("threshold_set_value", testBean.getThresholdValue());	
 										joSLA.put("err_set_value", testBean.getErrorValue());
 										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
+										joSLA.put("appedoReceivedOn", new Date().getTime());
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
 										joSLA.put("is_Down", isDowntime);

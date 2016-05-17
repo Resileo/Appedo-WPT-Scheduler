@@ -34,16 +34,16 @@ public class ScheduledLocationTracker extends TimerTask {
 		JSONObject joNodeAlert = null;
 		JSONArray jaInActivenodes = null;
 		SUMDBI sumdbi = null;
-		Set < String > existingAgentsFromDb = null, activeAgentsFromDb = null,allActiveAgentsInApi = null,activeDesktopAgents = null,activeMobileAgents = null,
+		Set<String> existingAgentsFromDb = null, activeAgentsFromDb = null, allActiveAgentsInApi = null, activeDesktopAgents = null, activeMobileAgents = null,
 				desktopAgentsToInsert = null,mobileAgentsToInsert = null;
-		
+
 		try {
-			allActiveAgentsInApi = new HashSet < String > ();
-			activeDesktopAgents = new HashSet < String > ();
-			activeMobileAgents = new HashSet < String > ();
-			desktopAgentsToInsert = new HashSet < String > ();
-			mobileAgentsToInsert = new HashSet < String > ();
-			
+			allActiveAgentsInApi = new HashSet<String>();
+			activeDesktopAgents = new HashSet<String>();
+			activeMobileAgents = new HashSet<String>();
+			desktopAgentsToInsert = new HashSet<String>();
+			mobileAgentsToInsert = new HashSet<String>();
+
 			sumdbi = new SUMDBI();
 			joNodeAlert = new JSONObject();
 			jaInActivenodes = new JSONArray();
@@ -51,7 +51,7 @@ public class ScheduledLocationTracker extends TimerTask {
 			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
 			StringBuilder keyStrbuildr = null;
 			client = new HttpClient();
-			
+
 			LogManager.infoLog(" frequent mail triggered in test environment : existingAgentsFromDb :"+existingAgentsFromDb);
 			LogManager.infoLog(" frequent mail triggered in test environment : activeAgentsFromDb :"+activeAgentsFromDb);
 
@@ -77,7 +77,7 @@ public class ScheduledLocationTracker extends TimerTask {
 						}
 						allActiveAgentsInApi.add(keyStr.split(":")[0]);
 					}
-					
+
 					// To alert admin/devops when active Agents are inActive
 					for (String strAgent: activeAgentsFromDb) {
 						if (!allActiveAgentsInApi.contains(strAgent)) {
@@ -87,7 +87,7 @@ public class ScheduledLocationTracker extends TimerTask {
 					if(jaInActivenodes.size() != 0 && jaInActivenodes !=null){
 						joNodeAlert.put("inactive_nodes", jaInActivenodes.toString());
 					}
-					
+
 					Iterator<String> itr= allActiveAgentsInApi.iterator();
 					while(itr.hasNext()){
 						String keyStr = (String) itr.next();
@@ -99,7 +99,7 @@ public class ScheduledLocationTracker extends TimerTask {
 					String activeNodes = keyStrbuildr.toString();
 						//update inactive locations in DB
 						sumdbi.updateInactiveAgents(activeNodes, con);
-						
+
 						//Desktop
 						for (String activeDeskloc: activeDesktopAgents) {
 							if (!existingAgentsFromDb.contains(activeDeskloc)) {
@@ -124,7 +124,7 @@ public class ScheduledLocationTracker extends TimerTask {
 								}
 								LogManager.infoLog("New Desktop Agents "+ desktopAgentsToInsert.toString());
 							}
-							if(mobileAgentsToInsert.size() > 0){
+							if (mobileAgentsToInsert.size() > 0) {
 								boolean mobileAgentsAdded = false;
 								mobileAgentsAdded = sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
 								if(mobileAgentsAdded){
@@ -145,32 +145,32 @@ public class ScheduledLocationTracker extends TimerTask {
 								//method.setRequestHeader("Connection", "close");
 								statusCode = client.executeMethod(method);
 								LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
-							}	
+							}
 				} else {
 					sumdbi.updateAllAgentsInactive(con);
 					LogManager.infoLog("No locations found in getLocations.php API");
-					}
-			} else {
-				LogManager.infoLog("No response from wpt server. Response status code : "+statusCode);
 				}
-		} catch(Throwable e) {
-			LogManager.errorLog(e);	
+			} else {
+				LogManager.infoLog("No response from wpt server. Response status code : "+ statusCode);
+			}
+		} catch (Throwable e) {
+			LogManager.errorLog(e);
 			try {
-				if( ! DataBaseManager.isConnectionExists(con) ){
+				if (!DataBaseManager.isConnectionExists(con)) {
 					con = DataBaseManager.reEstablishConnection(con);
 				}
 			} catch (SQLException e1) {
 				LogManager.errorLog(e);
-				}
-		}finally{
+			}
+		} finally {
 			try {
-				existingAgentsFromDb=null;
+				existingAgentsFromDb = null;
 				allActiveAgentsInApi = null;
-				activeAgentsFromDb=null;
+				activeAgentsFromDb = null;
 				activeDesktopAgents = null;
 				activeMobileAgents = null;
-				desktopAgentsToInsert=null;
-				mobileAgentsToInsert=null;
+				desktopAgentsToInsert = null;
+				mobileAgentsToInsert = null;
 			} catch (Exception e2) {
 				LogManager.errorLog(e2);
 			}
@@ -180,8 +180,8 @@ public class ScheduledLocationTracker extends TimerTask {
 	protected void finalize() throws Throwable {
 		LogManager.infoLog("Node inactiavting Thread is stopping");
 		if (con != null) {
-		DataBaseManager.close(con);
-		con = null;
+			DataBaseManager.close(con);
+			con = null;
 		}
 		super.finalize();
 	}
