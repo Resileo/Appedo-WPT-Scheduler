@@ -158,61 +158,6 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 		this.dateQueuedOn = dateQueuedOn;
 	}
 	
-	public JSONObject toJSON() {
-		JSONObject joBean = new JSONObject();
-		
-		joBean.put("test_id", lTestId);
-		joBean.put("user_id", lUserId);
-		joBean.put("test_name", strTestName);
-		joBean.put("test_type", strTestType);
-		joBean.put("url", strURL);
-		joBean.put("transaction", strTransaction);
-		joBean.put("run_every_minute", nRunEveryMinute);
-		joBean.put("status", bStatus);
-		joBean.put("start_date", startDate);
-		joBean.put("end_date", endDate);
-		joBean.put("dateQueuedOn", dateQueuedOn);
-		
-		return joBean;
-	}
-	
-	@Override
-	public String toString() {
-		return Long.toString(lTestId);
-	}
-	
-	@Override
-	public int compareTo(SUMTestBean another) {
-		// compareTo should return < 0 if this is supposed to be
-        // less than other, > 0 if this is supposed to be greater than 
-        // other and 0 if they are supposed to be equal
-    	return ((int) (dateQueuedOn.getTime() - another.getQueuedOn().getTime()));
-	}
-	
-	/* Below method is overridden to check the equality of objects
-	 * (non-Javadoc
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object o) {
-	    if(o == null) return false;
-	    if(!(o instanceof SUMTestBean)) return false;
-	    SUMTestBean other = (SUMTestBean) o;
-	    String d = "false";
-	    if(this.lTestId == other.lTestId) d="true"; 
-	    System.out.println("EQUALS:"+d);
-	    return this.lTestId == other.lTestId;
-	}
-	
-	/*Below method is overridden to check the equality of objects
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return (int)lTestId;
-	}
-	
 	public String getAgentType() {
 		return agentType;
 	}
@@ -335,5 +280,64 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 
 	public void setDownTimeAlert(boolean downTimeAlert) {
 		this.downTimeAlert = downTimeAlert;
+	}
+	
+	public JSONObject toJSON() {
+		JSONObject joBean = new JSONObject();
+		
+		joBean.put("test_id", lTestId);
+		joBean.put("user_id", lUserId);
+		joBean.put("test_name", strTestName);
+		joBean.put("test_type", strTestType);
+		joBean.put("url", strURL);
+		joBean.put("transaction", strTransaction);
+		joBean.put("run_every_minute", nRunEveryMinute);
+		joBean.put("status", bStatus);
+		joBean.put("start_date", startDate);
+		joBean.put("end_date", endDate);
+		joBean.put("dateQueuedOn", dateQueuedOn);
+		
+		return joBean;
+	}
+	
+	@Override
+	public String toString() {
+		return Long.toString(lTestId);
+	}
+	
+	@Override
+	public int compareTo(SUMTestBean another) {
+		// compareTo should return < 0 if this is supposed to be
+        // less than other, > 0 if this is supposed to be greater than 
+        // other and 0 if they are supposed to be equal
+    	return ((int) (dateQueuedOn.getTime() - another.getQueuedOn().getTime()));
+	}
+	
+	/* Below method is overridden to check the equality of objects
+	 * (non-Javadoc
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if(o == null) {
+			return false;
+		}
+		
+		if( ! (o instanceof SUMTestBean) ) {
+			return false;
+		}
+		
+		SUMTestBean other = (SUMTestBean) o;
+		
+		return this.lTestId == other.getTestId();
+	}
+	
+	/* Below method is overridden to check the equality of objects
+	 * (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return (int)lTestId;
 	}
 }

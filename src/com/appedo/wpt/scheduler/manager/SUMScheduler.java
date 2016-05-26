@@ -15,36 +15,57 @@ public class SUMScheduler {
 	
 	
 	public static boolean queueSUMTest(String strLocation, SUMTestBean testBean) throws Exception {
-		LinkedHashSet<SUMTestBean> setSUMLoc = null;
+		LinkedHashSet<SUMTestBean> hsSUMLocation = null;
 		Iterator<SUMTestBean> iterSUMTests = null;
-		SUMTestBean sumTestBean = null;
+		SUMTestBean sumTestBeanItr = null;
 		
-		boolean bReturn = false;
+		boolean bReturn = false, bAdd = false, bTestPresent = false;
 		
 		try {
 			// Get the HashSet of the location
 			synchronized (htSUMLocationTestQueues) {
 				if (htSUMLocationTestQueues.containsKey(strLocation)) {
-					setSUMLoc = htSUMLocationTestQueues.get(strLocation);
+					hsSUMLocation = htSUMLocationTestQueues.get(strLocation);
 				} else {
-					setSUMLoc = new LinkedHashSet<SUMTestBean>();
-					htSUMLocationTestQueues.put(strLocation, setSUMLoc);
+					hsSUMLocation = new LinkedHashSet<SUMTestBean>();
+					htSUMLocationTestQueues.put(strLocation, hsSUMLocation);
 				}
 			}
 			
-			// Queue the TestBean
-			synchronized (setSUMLoc) {
+			// Queue the TestBean when,
+			// 1. Location HashSet is blank.
+			// 2. Location HashSet does't have this Test-Id
+			// 3. Location HashSet has the same Test-Id, but added 2 minutes back.
+			synchronized (hsSUMLocation) {
 				testBean.setQueuedOn(new Date());
 				
-				// verify whether the Test is already Queued, within last 2 minutes
-				iterSUMTests = setSUMLoc.iterator();
-				while( iterSUMTests.hasNext() ) {
-					sumTestBean = iterSUMTests.next();
+				if( hsSUMLocation.size() == 0 ) {
+					// 1. Location HashSet is blank.
+					bAdd = true;
+				} else {
+					// verify whether the Test is already Queued, within last 2 minutes
+					iterSUMTests = hsSUMLocation.iterator();
 					
-					if( testBean.getTestId() == sumTestBean.getTestId() 			// Check whether same Test is available in the Queue
-							&& testBean.getQueuedOn().getTime() > (sumTestBean.getQueuedOn().getTime() + 120000l) ) {	// Check for the Queued time.
-						bReturn = setSUMLoc.add(testBean);
+					while( iterSUMTests.hasNext() ) {
+						sumTestBeanItr = iterSUMTests.next();
+						
+						if ( testBean.getTestId() == sumTestBeanItr.getTestId() ) {			// Check whether same Test is available in the Queue
+							if (testBean.getQueuedOn().getTime() > (sumTestBeanItr.getQueuedOn().getTime() + 120000l) ) {	// Check for the Queued time.
+								// 3. Location HashSet has the same Test-Id, but added 2 minutes back.
+								bAdd = true;
+							}
+							
+							// 2. Location HashSet does't have this Test-Id
+							bTestPresent = true;
+							
+							break;
+						}
 					}
+				}
+				
+				// Queue the TestBean when one of the above condition is satisfied
+				if( bAdd || !bTestPresent ) {
+					bReturn = hsSUMLocation.add(testBean);
 				}
 			}
 		} catch (Exception e) {
