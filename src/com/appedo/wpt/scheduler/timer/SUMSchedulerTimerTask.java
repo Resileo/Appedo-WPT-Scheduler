@@ -28,25 +28,27 @@ public class SUMSchedulerTimerTask extends TimerTask{
 		SUMManager.hmThreads.clear();
 		SUMManager manager = new SUMManager();
 		SUMDBI sumdbi = new SUMDBI();
-		ArrayList<SUMTestBean> sumTestBeans = null;
+		ArrayList<SUMTestBean> alSUMTestBeans = null;
 		
-		while(sumTestBeans == null){
+		while(alSUMTestBeans == null){
 			try {
 				con = DataBaseManager.reEstablishConnection(con);
-				sumTestBeans = sumdbi.getTestIdDetails(con);
+				alSUMTestBeans = sumdbi.getTestIdDetails(con);
 			} catch (Throwable e) {
+				LogManager.errorLog(e);
 				if( ! ( e.getMessage().toLowerCase().contains("connection") && e.getMessage().toLowerCase().contains("closed") ) ) {
 					break;
 				}
-				LogManager.errorLog(e);
 			}
 		}
 		
-		for(int i=0; i<sumTestBeans.size(); i++){
-			try {
-				manager.runSUMTests(sumTestBeans.get(i));
-			} catch (Throwable e1) {
-				e1.printStackTrace();
+		if( alSUMTestBeans != null ) {
+			for(int i=0; i<alSUMTestBeans.size(); i++){
+				try {
+					manager.runSUMTests(alSUMTestBeans.get(i));
+				} catch (Throwable e1) {
+					LogManager.errorLog(e1);
+				}
 			}
 		}
 	}
