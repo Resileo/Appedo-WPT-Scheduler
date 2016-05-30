@@ -46,21 +46,24 @@ public class SUMDBI {
 		Date dateLog = LogManager.logMethodStart();
 		
 		try{
-			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
 					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
-					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
-					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id ")
-					//.append("where status=true and is_delete = false and start_date <= now() and end_date >= now() and testtype = 'URL' ")
-					.append("where status=true and is_delete = false and start_date <= now() and end_date >= now()")
-					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
-			System.out.println("Query"+sbQuery.toString());
+					.append("sla.sum_type, t.warning, t.error, t.rm_min_breach_count, t.downtime_alert ")
+					.append("FROM sum_test_master t ")
+					.append("INNER JOIN sum_test_cluster_mapping sm ON sm.test_id = t.test_id ")
+					.append("LEFT JOIN sum_connectivity sc ON sc.connection_id = t.connection_id ")
+					.append("LEFT JOIN sum_test_device_os_browser st ON st.sum_test_id = sm.test_id ")
+					.append("LEFT JOIN sum_device_os_browser os ON st.device_os_browser_id = os.dob_id ")
+					.append("LEFT JOIN so_sla_sum sla ON sla.sum_test_id = sm.test_id AND sla.sum_type = 'RESPONSE_MONITORING' ")
+					//.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now() AND testtype = 'URL' ")
+					.append("WHERE status=true AND is_delete = false AND start_date <= now() AND end_date >= now() ")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS Interval) <= now() ")
+					.append("ORDER BY start_date ASC");
+			 // System.out.println("Query : "+sbQuery.toString());
+
 			pstmt = con.prepareStatement(sbQuery.toString());
 			rs = pstmt.executeQuery();
-			rumTestBeans.clear();
 			// Timer 
 			while (rs.next()) {
 				SUMTestBean testBean = new SUMTestBean();
@@ -87,7 +90,7 @@ public class SUMDBI {
 				if( rs.getString("packet_loss")!= null ) {
 					testBean.setPacketLoss(String.valueOf(rs.getInt("packet_loss")));
 				}
-				
+
 				if(rs.getString("browser_name")!=null){
 					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
@@ -99,38 +102,33 @@ public class SUMDBI {
 					testBean.setLocation(rs.getString("location"));
 				}
 				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
-				
+
 				if( rs.getString("sla_id")!= null ){
 					testBean.setSlaId(rs.getLong("sla_id"));
 				}
-				
+
 				if( rs.getString("sla_sum_id")!= null ){
 					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
 				}
-				
-				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
-				}
-				
+
 				if( rs.getString("warning")!= null ){
 					testBean.setThresholdValue(rs.getInt("warning"));
 				}
-				
+
 				if( rs.getString("error")!= null ){
 					testBean.setErrorValue(rs.getInt("error"));
 				}
-				
-				if( rs.getString("min_breach_count")!= null ){
-					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+
+				if( rs.getString("rm_min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("rm_min_breach_count"));
 				}
-				
+
 				// testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 //				HashSet<String> a = new HashSet<String>();
 //				a.add("ChennaiWindows8");
 //				testBean.setTargetLocations(a);
 				rumTestBeans.add(testBean);
 				// manager.runRUMTests(testBean);
-				
 			}
 		} catch (Throwable ex) {
 			LogManager.errorLog(ex);
@@ -141,12 +139,12 @@ public class SUMDBI {
 			rs = null;
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	  return rumTestBeans;
 	}
-	
+
 	
 	/**
 	 * Gets the cluster_id from mapping table by passing test_id
@@ -158,7 +156,7 @@ public class SUMDBI {
 	public HashSet<String> getTestTargetLocations(Connection con, long test_id) {
 		PreparedStatement pstmt = null;
 		ResultSet rsClusters = null;
-		
+
 		HashSet<String> hsLocations = new HashSet<String>();
 		StringBuilder sbQuery = new StringBuilder();
 		try {
@@ -171,7 +169,7 @@ public class SUMDBI {
 			sbQuery.append("SELECT * FROM sum_test_cluster_mapping WHERE test_id = ").append(test_id);
 			pstmt = con.prepareStatement(sbQuery.toString());
 			rsClusters = pstmt.executeQuery();
-			
+
 			while( rsClusters.next() ){
 				hsLocations.add( rsClusters.getString("location") );
 			}
@@ -183,36 +181,40 @@ public class SUMDBI {
 			rsClusters = null;
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
-		
+
 		return hsLocations;
 	}
-	
+
 	public ArrayList<SUMTestBean> createNewThreadForTest(Connection con, long test_id, boolean status){
 
 		Statement stmt = null;
 		ResultSet rs = null;
 		StringBuilder sbQuery = new StringBuilder();
 		ArrayList<SUMTestBean> rumTestBeans = new ArrayList<SUMTestBean>();
-		
+
 		try{
-			sbQuery .append("select t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, ")
 					.append("t.latency, t.packet_loss, sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
-					.append("sla.is_above_threashold, t.warning, t.error, t.min_breach_count, t.downtime_alert from sum_test_master t ")
-					.append("inner join sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
-					.append("left join sum_connectivity sc on sc.connection_id = t.connection_id left join sum_test_device_os_browser st ")
-					.append("on st.sum_test_id = sm.test_id left join sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
-					.append("left join so_sla_sum sla on sla.sum_test_id = sm.test_id  where status=")
-					.append(status).append(" and t.test_id=").append(test_id).append(" and is_delete = false and start_date <= now() and end_date >= now() ")
-					.append("and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
+					.append("sla.sum_type, t.warning, t.error, t.rm_min_breach_count, t.downtime_alert ")
+					.append("FROM sum_test_master t ")
+					.append("INNER JOIN sum_test_cluster_mapping sm on sm.test_id = t.test_id ")
+					.append("LEFT JOIN sum_connectivity sc on sc.connection_id = t.connection_id ")
+					.append("LEFT JOIN sum_test_device_os_browser st on st.sum_test_id = sm.test_id ")
+					.append("LEFT JOIN sum_device_os_browser os on st.device_os_browser_id = os.dob_id ")
+					.append("LEFT JOIN so_sla_sum sla on sla.sum_test_id = sm.test_id AND sla.sum_type = 'RESPONSE_MONITORING' ")
+					.append("WHERE status=").append(status)
+					.append(" AND t.test_id=").append(test_id).append(" AND is_delete = false AND start_date <= now() AND end_date >= now() ")
+					.append("AND last_run_detail+CAST(runevery||' minute' AS INTERVAL) <= now() ")
+					.append("ORDER BY start_date ASC");
 					//.append("and testtype = 'URL' and last_run_detail+CAST(runevery||' minute' AS Interval) <= now() order by start_date asc");
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(sbQuery.toString());
 			rumTestBeans.clear();
-			
+
 			while (rs.next()) {
 				SUMTestBean testBean = new SUMTestBean();
 				testBean.setTestId(Integer.valueOf(rs.getString("test_id")));
@@ -237,7 +239,7 @@ public class SUMDBI {
 				if( rs.getString("packet_loss")!= null ) {
 					testBean.setPacketLoss(String.valueOf(rs.getInt("packet_loss")));
 				}
-				
+
 				if(rs.getString("browser_name")!=null){
 					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
@@ -249,34 +251,30 @@ public class SUMDBI {
 					testBean.setLocation(rs.getString("location"));
 				}
 				testBean.setRepeatView(String.valueOf(rs.getInt("repeatView")));
-				
+
 				if( rs.getString("sla_id")!= null ){
 					testBean.setSlaId(rs.getLong("sla_id"));
 				}
-				
+
 				if( rs.getString("sla_sum_id")!= null ){
 					testBean.setSlaSumId(rs.getLong("sla_sum_id"));
 				}
-				
-				if( rs.getString("is_above_threashold")!= null ){
-					testBean.setAboveThreshold(rs.getBoolean("is_above_threashold"));
-				}
-				
+
 				if( rs.getString("warning")!= null ){
 					testBean.setThresholdValue(rs.getInt("warning"));
 				}
-				
+
 				if( rs.getString("error")!= null ){
 					testBean.setErrorValue(rs.getInt("error"));
 				}
-				
-				if( rs.getString("min_breach_count")!= null ){
-					testBean.setMinBreachCount(rs.getInt("min_breach_count"));
+
+				if( rs.getString("rm_min_breach_count")!= null ){
+					testBean.setMinBreachCount(rs.getInt("rm_min_breach_count"));
 				}
 				//testBean.setTargetLocations( (new SUMDBI()).getTestTargetLocations(con, testBean.getTestId()) );
 				rumTestBeans.add(testBean);
 				// manager.runRUMTests(testBean);
-				
+
 			}
 		} catch (Throwable ex) {
 			LogManager.errorLog(ex);
@@ -285,12 +283,12 @@ public class SUMDBI {
 			rs = null;
 			DataBaseManager.close(stmt);
 			stmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	  return rumTestBeans;
 	}
-	
+
 	/**
 	 * Inserting values in sum_har_test_results if the testtype is URL
 	 * 
@@ -368,8 +366,8 @@ public class SUMDBI {
 						+ dateFormat.format(Calendar.getInstance().getTime()).toString() + "')";
 				NodeManager.agentLogQueue(strQryInsHarFile);
 			}
-			
-			
+
+
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
@@ -377,17 +375,17 @@ public class SUMDBI {
 			UtilsFactory.clearCollectionHieracy( strQryInsHarFile );
 		}
 	}
-	
+
 	public long insertSUMlog(Connection con, SUMAuditLogBean auditLogBean) throws Throwable {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		long audit_log_id = 0;
-		
+
 		try {
 			sbQuery	.append("insert into sum_execution_audit_log(node_id, node_user_id, agent_type, sum_test_id, sum_test_name, appedo_user_id, appedo_enterprise_id, execution_time, location, latitude, longitude, ip_address, mac_address, error_msg, remarks, created_on) ")
 					.append("values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
-			
+
 			pstmt.setLong(1, auditLogBean.getNodeId());
 			pstmt.setLong(2, auditLogBean.getNodeUserId());
 			pstmt.setString(3, UtilsFactory.makeValidVarchar(auditLogBean.getAgentType()));
@@ -413,7 +411,7 @@ public class SUMDBI {
 		} finally {
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 		return audit_log_id;
@@ -428,9 +426,9 @@ public class SUMDBI {
 					.append(joNodeStatus.getBoolean("execution_status")).append(", error_msg = ")
 					.append(UtilsFactory.makeValidVarchar(joNodeStatus.getString("error"))).append("  WHERE created_on = '")
 					.append(new Timestamp(Long.valueOf(joNodeStatus.getString("log_id")))).append("'");
-			
+
 			NodeManager.agentLogQueue(sbQuery.toString());
-			
+
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 			throw e;
@@ -466,7 +464,7 @@ public class SUMDBI {
 			rs = null;
 			DataBaseManager.close(stmt);
 			stmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( strQry );
 		}
 		return sumNodeBean;
@@ -494,7 +492,7 @@ public class SUMDBI {
 		} finally {
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 	}
@@ -502,19 +500,19 @@ public class SUMDBI {
 	public int getMaxMeasurementPerMonth(Connection con, long userId, JSONObject jsonObject) throws Exception {
 		PreparedStatement pstmt = null;
 		ResultSet rst = null;
-		
+
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
 		// Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
 		Date dateLog = LogManager.logMethodStart();
-		
+
 		try {
 			sbQuery	.append("SELECT sum_measurements_used_today as node_total_runcount ")
 					.append("FROM usermaster WHERE user_id = ? ");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.setLong(1, userId);
 			rst = pstmt.executeQuery();
-			
+
 			if(rst.next()) {
 				nUserTotalRuncount = rst.getInt("node_total_runcount");
 			}
@@ -527,7 +525,7 @@ public class SUMDBI {
 			rst = null;
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-			
+
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
 		
@@ -775,7 +773,7 @@ public class SUMDBI {
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
-		}									
+		}
 	}
 	
 	public void resetMeasurements(Connection con){
@@ -794,7 +792,7 @@ public class SUMDBI {
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 			UtilsFactory.clearCollectionHieracy( sbQuery );
-		}									
+		}
 	}
 
 
@@ -886,9 +884,9 @@ public class SUMDBI {
 					.append(locToinsert.split("--")[0])
 					.append("','0.0','0.0','NA','NA','NA','NA','Windows','windows server 2008 r2','3.13.0-32-generic'")
 					.append(",'NA',-1,now(),'active','null-1.0.13')");
-				
+
 				LogManager.infoLog("frequent mail triggered in test environment : Insert query 1 "+sbQuery.toString());
-				
+
 				pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 				pstmt.executeUpdate();
 				lKeyId = DataBaseManager.returnKey(pstmt);
@@ -986,7 +984,7 @@ public class SUMDBI {
 				UtilsFactory.clearCollectionHieracy( sbQuery );
 			}
 			return bReturn;
-		}		
+		}
 		
 	public void updateInactiveAgents(String activeLocations, Connection con) {
 		Date dateLog = LogManager.logMethodStart();

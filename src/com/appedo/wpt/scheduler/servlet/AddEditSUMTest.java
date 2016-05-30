@@ -43,6 +43,8 @@ public class AddEditSUMTest extends HttpServlet {
 			LogManager.infoLog("STATUS:::: "+status);
 			
 			ArrayList<SUMTestBean> alSUMTestBeans = new ArrayList<SUMTestBean>();
+			
+			// If Test is deleted
 			if(delStatus != null){
 				if (SUMManager.hmThreads.containsKey(test_id)) {
 					for(int i = 0; i < SUMManager.hmThreads.get(test_id).size(); i++){
@@ -50,6 +52,7 @@ public class AddEditSUMTest extends HttpServlet {
 					}
 				}
 			}
+			// If Test is Added or Edited
 			else{
 				alSUMTestBeans = sumdbi.createNewThreadForTest(con, test_id, Boolean.valueOf(status));
 			}
@@ -57,7 +60,7 @@ public class AddEditSUMTest extends HttpServlet {
 			for(int i=0; i<alSUMTestBeans.size(); i++){
 				try {
 					LogManager.infoLog("ADDEDIT :"+alSUMTestBeans.get(i));
-					manager.runSUMTests((SUMTestBean) alSUMTestBeans.get(i).clone());
+					manager.runSUMTests((SUMTestBean) alSUMTestBeans.get(i));
 				} catch (Throwable e1) {
 					e1.printStackTrace();
 					LogManager.errorLog(e1);
