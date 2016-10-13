@@ -173,37 +173,37 @@ public class RunTest extends Thread {
 
 						// TODO what is the response for stopped servers; Send SLA
 
-						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
-							joResponse = JSONObject.fromObject(xmlJSONObj.toString());
-							if (joResponse.containsKey("response")) {
-								JSONObject jores = JSONObject.fromObject(joResponse.get("response"));
-								if(jores.containsKey("data")){
-									JSONObject joData = JSONObject.fromObject(jores.get("data"));
+/*						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
+							joResponse = JSONObject.fromObject(xmlJSONObj.toString());*/
+							if (xmlJSONObj.has("response") ) {
+								org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
+								if(jores.has("data")){
+									org.json.JSONObject joData = jores.getJSONObject("data");
 
-									if(joData.containsKey("run")){
-										JSONObject jorun = JSONObject.fromObject(joData.get("run"));
-										if(jorun.containsKey("firstView")){
-											JSONObject joFView = JSONObject.fromObject(jorun.get("firstView"));
-											if(joFView.containsKey("status")){
-												JSONObject jostatus = JSONObject.fromObject(joFView.get("status"));
-											//	System.out.println(jostatus);
+									if(joData.has("run")){
+										org.json.JSONObject jorun =  joData.getJSONObject("run");
+										if(jorun.has("firstView")){
+											org.json.JSONObject joFView =  jorun.getJSONObject("firstView");
+											
+											if( joFView.has("status") && joFView.getString("status").length() > 0){
+												LogManager.infoLog("Status of the url configured with the  ID: "+testBean.getTestId()+"  - "+joFView.getString("status"));
 												isDowntime=true;
 											}
 										}
 									}
-									if( joData.containsKey("average") ){
-										JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
+									if( joData.has("average") ){
+										org.json.JSONObject joAverage =  joData.getJSONObject("average");
 										double repeatLoadTime = 0, firstLoadTime = 0;
-										if(joAverage.get("firstView") instanceof JSONObject){
-											JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
+										if(joAverage.get("firstView") instanceof org.json.JSONObject){
+											org.json.JSONObject joFirstView =  joAverage.getJSONObject("firstView");
 											firstLoadTime = joFirstView.getInt("loadTime");
 										} 
-										if(joAverage.get("repeatView") instanceof JSONObject){
-											JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
+										if(joAverage.has("average") && joAverage.get("repeatView") instanceof org.json.JSONObject){
+											org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
 											repeatLoadTime = joRepeatView.getInt("loadTime");
 										} 
 										sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
-
+										
 										// SLA
 										JSONObject joSLA = new JSONObject();
 										joSLA.put("sla_id", testBean.getSlaId());
@@ -246,13 +246,14 @@ public class RunTest extends Thread {
 									// Insert Json into db
 									sumManager.insertResultJson(joData, harId);
 								}
-							}
+							}else{
+								LogManager.infoLog("xmlJSONObj does not contain response: "+testBean.getTestId());
 						}
 						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId());
 						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
 						String saveDir = Constants.HAR_PATH+testBean.getTestId();
 						HttpDownloadUtility.downloadFile(fileURL, saveDir);
-
+						
 						try {
 							File file = new File(saveDir);
 							for(int i=0;i<file.listFiles().length;i++){
@@ -270,7 +271,7 @@ public class RunTest extends Thread {
 
 				}
 				
-			}	
+			}
 			
 			if (statusCode != HttpStatus.SC_OK) {
 				LogManager.infoLog("Method failed: " + method.getStatusLine());
@@ -291,7 +292,14 @@ public class RunTest extends Thread {
 		this.testBean.setStatus(stopRun);
 	}
 	
-	
+	/**
+	 * 
+	 * @param filePath
+	 * @param strTargetHarFile
+	 * @param strTestId
+	 * @return
+	 * @throws Throwable
+	 */
 	public JSONObject exportHarFile(String filePath, String strTargetHarFile, String strTestId) throws Throwable {
 		int BUFFER_SIZE = 4096;
 		FileInputStream inputStream = null;
@@ -299,72 +307,71 @@ public class RunTest extends Thread {
 		BufferedReader reader = null;
 		JSONObject joResponse = new JSONObject();
 		long startTime = System.currentTimeMillis();
-
-		 try {
+		
+		try {
 			joResponse.put("success", true);
 			// takes file path from input parameter
 			File uploadFile = new File(filePath);
-			 
-			//System.out.println("File to upload: " + filePath);
-			
-		   String UPLOAD_URL = Constants.EXPORT_URL;
+
+			String UPLOAD_URL = Constants.EXPORT_URL;
 			// creates a HTTP connection
-	       URL url = new URL(UPLOAD_URL);
-	       HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-	       httpConn.setUseCaches(false);
-	       httpConn.setDoOutput(true);
-	       httpConn.setRequestMethod("POST");
-	       // sets file name as a HTTP header
-	       httpConn.setRequestProperty("har_file_Name", strTargetHarFile);
-	       httpConn.setRequestProperty("command", "UPLOAD");
-	       httpConn.setRequestProperty("test_id", strTestId);
+			URL url = new URL(UPLOAD_URL);
+			HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+			httpConn.setUseCaches(false);
+			httpConn.setDoOutput(true);
+			httpConn.setRequestMethod("POST");
+			// sets file name as a HTTP header
+			httpConn.setRequestProperty("har_file_Name", strTargetHarFile);
+			httpConn.setRequestProperty("command", "UPLOAD");
+			httpConn.setRequestProperty("test_id", strTestId);
 
-	       // opens output stream of the HTTP connection for writing data
-	       outputStream = httpConn.getOutputStream();
+			// opens output stream of the HTTP connection for writing data
+			outputStream = httpConn.getOutputStream();
 
-	       // Opens input stream of the file for reading data
-	       inputStream = new FileInputStream(uploadFile);
+			// Opens input stream of the file for reading data
+			inputStream = new FileInputStream(uploadFile);
 
-	       byte[] buffer = new byte[BUFFER_SIZE];
-	       int bytesRead = -1;
+			byte[] buffer = new byte[BUFFER_SIZE];
+			int bytesRead = -1;
 
-	       System.out.println("Upload started...");
+			while ((bytesRead = inputStream.read(buffer)) != -1) {
+				outputStream.write(buffer, 0, bytesRead);
+			}
 
-	       while ((bytesRead = inputStream.read(buffer)) != -1) {
-		            outputStream.write(buffer, 0, bytesRead);
-		        }
+			// always check HTTP response code from server
+			int responseCode = httpConn.getResponseCode();
 
-	       System.out.println("Upload succeded.");
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				// reads server's response
+				reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
+				String response = reader.readLine();
+				LogManager.infoLog("Server's response: " + response);
 
-	       // always check HTTP response code from server
-	       int responseCode = httpConn.getResponseCode();
+			} else {
+				LogManager.infoLog("Server returned non-OK code: " + responseCode);
+				joResponse.put("success", false);
+			}
+		} catch (Throwable t) {
+			LogManager.infoLog("Exception in ExportHarFile() :" + t.getMessage());
+			t.printStackTrace();
+			joResponse.put("success", true);
+			throw t;
 
-	       if (responseCode == HttpURLConnection.HTTP_OK) {
-	       	// reads server's response
-	       	reader = new BufferedReader(new InputStreamReader(
-		                    httpConn.getInputStream()));
-	       	String response = reader.readLine();
-	       	System.out.println("Server's response: " + response);
-
-		    } else {
-		            System.out.println("Server returned non-OK code: " + responseCode);
-		            joResponse.put("success", false);
-		    }
-		 }catch(Throwable t) {
-			 System.out.println("Exception in ExportHarFile() :"+t.getMessage());
-			 t.printStackTrace();
-			 joResponse.put("success", true);
-			 throw t;
-
-		 }finally {
-			 LogManager.infoLog("Time Taken to export har file to server: "+(System.currentTimeMillis() - startTime)+" TestId: "+strTestId);
-			 outputStream.close();
-			 inputStream.close();
-			 reader.close();
-		 }
+		} finally {
+			LogManager.infoLog("Time Taken to export har file to server: " + (System.currentTimeMillis() - startTime) + " TestId: " + strTestId);
+			outputStream.close();
+			inputStream.close();
+			reader.close();
+		}
 		 return joResponse;
 	}
 	
+	/**
+	 * 
+	 * @param strHarPath
+	 * @return
+	 * @throws Throwable
+	 */
 	public JSONObject deleteHar(String strHarPath) throws Throwable {
 		JSONObject joDeleteResponse = new JSONObject();
 		long startTime = System.currentTimeMillis();
@@ -372,8 +379,8 @@ public class RunTest extends Thread {
 		try {
 			joDeleteResponse.put("success", true);
 			file.delete();
-			LogManager.infoLog("Time taken to deleteHar: "+(System.currentTimeMillis() - startTime));
-		}catch(Throwable t) {
+			LogManager.infoLog("Time taken to deleteHar: " + (System.currentTimeMillis() - startTime));
+		} catch (Throwable t) {
 			System.out.println("Exception in deleteHar" + t.getMessage());
 			joDeleteResponse.put("success", false);
 			throw t;

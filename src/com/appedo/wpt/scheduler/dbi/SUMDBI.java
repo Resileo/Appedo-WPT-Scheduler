@@ -796,7 +796,7 @@ public class SUMDBI {
 	}
 
 
-	public void insertResultJson(Connection con, JSONObject joData, long harId) {
+	public void insertResultJson(Connection con, org.json.JSONObject joData, long harId) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		Date dateLog = LogManager.logMethodStart();
