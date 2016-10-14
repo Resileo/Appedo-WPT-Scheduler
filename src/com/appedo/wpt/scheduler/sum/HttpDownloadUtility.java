@@ -28,7 +28,7 @@ public class HttpDownloadUtility {
 		HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
 		int responseCode = httpConn.getResponseCode();
 
-		// always check HTTP response code first
+		// Always check HTTP response code first
 		if (responseCode == HttpURLConnection.HTTP_OK) {
 			String fileName = "";
 			String disposition = httpConn.getHeaderField("Content-Disposition");
@@ -36,19 +36,19 @@ public class HttpDownloadUtility {
 			int contentLength = httpConn.getContentLength();
 			
 			if (disposition != null) {
-				// extracts file name from header field
+				// Extracts file name from header field
 				int index = disposition.indexOf("filename=");
 				if (index > 0) {
 					fileName = disposition.substring(index + 9, disposition.length());
 				}
 			} else {
-				// extracts file name from URL
+				// Extracts file name from URL
 				fileName = fileURL.substring(fileURL.lastIndexOf("/") + 1, fileURL.length());
 			}
 			
 			LogManager.infoLog("fileName = " + fileName);
 			
-			// opens input stream from the HTTP connection
+			// Opens input stream from the HTTP connection
 			InputStream inputStream = httpConn.getInputStream();
 			String saveFilePath = saveDir + File.separator + fileName;
 
@@ -68,7 +68,7 @@ public class HttpDownloadUtility {
 			outputStream.close();
 			inputStream.close();
 			
-			LogManager.infoLog("downloadFile - Time Taken to Download har file in local: " + (System.currentTimeMillis() - startTime));
+			LogManager.infoLog("DownloadFile - Time Taken to Download har file in local: " + (System.currentTimeMillis() - startTime));
 		} else {
 			LogManager.infoLog("No file to download. Server replied HTTP code: " + responseCode);
 		}

@@ -102,22 +102,22 @@ public class TransactionResult extends HttpServlet {
 				statusCode = client.executeMethod(method);
 				responseStream = method.getResponseBodyAsString();
 				org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
-				if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
-					joResponse = JSONObject.fromObject(xmlJSONObj.toString());
-					if (joResponse.containsKey("response")) {
-						JSONObject jores = JSONObject.fromObject(joResponse.get("response"));
-						if(jores.containsKey("data")){
-							JSONObject joData = JSONObject.fromObject(jores.get("data"));
+/*				if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
+					joResponse = JSONObject.fromObject(xmlJSONObj.toString());*/
+					if (xmlJSONObj.has("response")) {
+						org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
+						if(jores.has("data")){
+							org.json.JSONObject joData = jores.getJSONObject("data");
 							
-							if( joData.containsKey("average") ){
-								JSONObject joAverage = JSONObject.fromObject(joData.get("average"));
+							if( joData.has("average") ){
+								org.json.JSONObject joAverage = joData.getJSONObject("average");
 								double repeatLoadTime = 0, firstLoadTime = 0;
-								if(joAverage.get("firstView") instanceof JSONObject){
-									JSONObject joFirstView = JSONObject.fromObject(joAverage.get("firstView"));
+								if(joData.has("firstView") && joAverage.get("firstView") instanceof org.json.JSONObject){
+									org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
 									firstLoadTime = joFirstView.getInt("loadTime");
 								} 
-								if(joAverage.get("repeatView") instanceof JSONObject){
-									JSONObject joRepeatView = JSONObject.fromObject(joAverage.get("repeatView"));
+								if(joData.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
+									org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
 									repeatLoadTime = joRepeatView.getInt("loadTime");
 								} 
 								if( joAverage.get("firstView").equals("") ){
@@ -125,7 +125,7 @@ public class TransactionResult extends HttpServlet {
 								}
 								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 								
-								// SLA 
+								// SLA
 								JSONObject joSLA = new JSONObject();
 								if( isDowntime ){
 									joSLA.put("sum_test_id", test_id);
@@ -147,7 +147,7 @@ public class TransactionResult extends HttpServlet {
 							sumManager.insertResultJson(joData, harId);
 						}
 					}
-				}
+				/*}*/
 				LogManager.infoLog("Before export.php for TestId: "+test_id);
 				String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+wpt_test_code;
 				String saveDir = Constants.HAR_PATH+test_id;

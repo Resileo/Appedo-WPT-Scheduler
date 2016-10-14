@@ -198,7 +198,7 @@ public class RunTest extends Thread {
 											org.json.JSONObject joFirstView =  joAverage.getJSONObject("firstView");
 											firstLoadTime = joFirstView.getInt("loadTime");
 										} 
-										if(joAverage.has("average") && joAverage.get("repeatView") instanceof org.json.JSONObject){
+										if(joAverage.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
 											org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
 											repeatLoadTime = joRepeatView.getInt("loadTime");
 										} 
@@ -252,6 +252,7 @@ public class RunTest extends Thread {
 						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId());
 						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
 						String saveDir = Constants.HAR_PATH+testBean.getTestId();
+						// Downloads har from wpt server and keep it in wpt_scheduler instance
 						HttpDownloadUtility.downloadFile(fileURL, saveDir);
 						
 						try {
@@ -259,6 +260,7 @@ public class RunTest extends Thread {
 							for(int i=0;i<file.listFiles().length;i++){
 								File f = file.listFiles()[i];
 								sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
+								// Exports har files to the har repository
 								JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
 								if(jo.getBoolean("success")){
 									deleteHar(saveDir+"/"+f.getName());

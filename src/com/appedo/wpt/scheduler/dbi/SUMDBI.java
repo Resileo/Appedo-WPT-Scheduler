@@ -92,7 +92,6 @@ public class SUMDBI {
 				}
 
 				if(rs.getString("browser_name")!=null){
-					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
 						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
 					} else {
@@ -241,7 +240,6 @@ public class SUMDBI {
 				}
 
 				if(rs.getString("browser_name")!=null){
-					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
 						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
 					} else {

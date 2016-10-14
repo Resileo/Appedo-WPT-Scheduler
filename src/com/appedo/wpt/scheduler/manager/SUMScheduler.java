@@ -89,10 +89,10 @@ public class SUMScheduler {
 			}
 			
 			synchronized ( setSUMLoc ) {
-				sumTestBean = setSUMLoc.iterator().next();
-				//setSUMLoc.iterator().remove();
-				setSUMLoc.remove(sumTestBean);
-				if( sumTestBean != null ){
+				if(setSUMLoc.iterator().hasNext()){
+					sumTestBean = setSUMLoc.iterator().next();
+					//setSUMLoc.iterator().remove();
+					setSUMLoc.remove(sumTestBean);
 				}
 				return sumTestBean;
 			}
