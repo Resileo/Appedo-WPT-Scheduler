@@ -119,11 +119,11 @@ public class TransactionResult extends HttpServlet {
 							if( joData.has("average") ){
 								org.json.JSONObject joAverage = joData.getJSONObject("average");
 								double repeatLoadTime = 0, firstLoadTime = 0;
-								if(joData.has("firstView") && joAverage.get("firstView") instanceof org.json.JSONObject){
+								if(joAverage.has("firstView") && joAverage.get("firstView") instanceof org.json.JSONObject){
 									org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
 									firstLoadTime = joFirstView.getInt("loadTime");
 								} 
-								if(joData.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
+								if(joAverage.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
 									org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
 									repeatLoadTime = joRepeatView.getInt("loadTime");
 								} 
