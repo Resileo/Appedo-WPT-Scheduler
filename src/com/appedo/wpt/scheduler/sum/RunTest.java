@@ -161,7 +161,9 @@ public class RunTest extends Thread {
 							statusCheckStatus = joResponse.getInt("statusCode");
 							
 							if( statusCheckStatus != 200 ) {
+								// If status code is not `200` , make sleep it for 10 secs
 								LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> "+statusCheckStatus);
+								Thread.sleep(10*1000);
 							}
 							
 							// To update har table status for showing in New SUM UI
