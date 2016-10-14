@@ -87,15 +87,22 @@ public class TransactionResult extends HttpServlet {
 						//sumManager.updateHarTable(test_id, statusCode,statusText, wpt_test_code, 0, 0);
 						sumManager.updateHarTable(test_id, joResponse.getInt("statusCode"), joResponse.getString("statusText"),wpt_test_code, 0, 0);
 					}
+					
+					if( statusCheckStatus != 200 ) {
+						// If status code is not `200` , make sleep it for 10 secs
+						LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+test_id+" <> runTestCode: "+wpt_test_code+" <> "+statusCheckStatus);
+						Thread.sleep(10*1000);
+					}
+					
 					cnt++;
 				}
-				LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+test_id);
+				LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
 			
 
 			if( statusCheckStatus == 200 ){
 				client = new HttpClient();
 				// URLEncoder.encode(requestUrl,"UTF-8");
-				LogManager.infoLog("Before jsonResult.php for TestId: "+test_id);
+				LogManager.infoLog("Before jsonResult.php for TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
 				method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+wpt_test_code+"/");
 				// method.addParameter("test", wpt_test_code);
 				method.setRequestHeader("Connection", "close");
