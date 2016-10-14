@@ -16,10 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.connect.DataBaseManager;
-import com.appedo.wpt.scheduler.manager.NodeManager;
-import com.appedo.wpt.scheduler.timer.AgentLogTimerTask;
 import com.appedo.wpt.scheduler.timer.ResetMeasurementTimerTask;
-import com.appedo.wpt.scheduler.timer.SUMAuditLogTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMSchedulerTimerTask;
 import com.appedo.wpt.scheduler.timer.ScheduledLocationTracker;
 

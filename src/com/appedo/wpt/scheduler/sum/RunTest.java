@@ -29,7 +29,6 @@ import com.appedo.wpt.scheduler.manager.SUMManager;
  */
 public class RunTest extends Thread {
 	
-	
 	String strLocation;
 	public SUMTestBean testBean;
 	HttpClient client = null;
@@ -69,7 +68,8 @@ public class RunTest extends Thread {
 			// Pushing test to 70.70 server, get response 
 			client = new HttpClient();
 			// URLEncoder.encode(requestUrl,"UTF-8");
-			LogManager.infoLog("Before Starting Test (runtest.php) for Test Id: "+testBean.getTestId());
+			LogManager.infoLog("Before Starting Test through runtest.php for TestId: "+testBean.getTestId());
+			
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"runtest.php");
 			method.addParameter("url", testBean.getURL());
 			method.addParameter("label", testBean.getTestName());
@@ -119,23 +119,27 @@ public class RunTest extends Thread {
 			int statusCode = client.executeMethod(method);
 			LogManager.infoLog("statusCode: "+statusCode);
 			
-			String responseStream = method.getResponseBodyAsString();
-			// String responseStream = "{\"statusCode\":200,\"statusText\":\"Ok\",\"data\":{\"testId\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"ownerKey\":\"e9028f67d5a3dba9019b214267a555d422e43d1b\",\"jsonUrl\":\"http://www.webpagetest.org/jsonResult.php?test=150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"xmlUrl\":\"http://www.webpagetest.org/xmlResult/150813_FE_e5fd27139876bc8ed69ed3628ced3280/\",\"userUrl\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/\",\"summaryCSV\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/page_data.csv\",\"detailCSV\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/requests.csv\"}}";
-			System.out.println("RESPONSE:: "+responseStream);
-
+			String responseStream = method.getResponseBodyAsString().trim();
+			// Sample responseStream = "{\"statusCode\":200,\"statusText\":\"Ok\",\"data\":{\"testId\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"ownerKey\":\"e9028f67d5a3dba9019b214267a555d422e43d1b\",\"jsonUrl\":\"http://www.webpagetest.org/jsonResult.php?test=150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"xmlUrl\":\"http://www.webpagetest.org/xmlResult/150813_FE_e5fd27139876bc8ed69ed3628ced3280/\",\"userUrl\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/\",\"summaryCSV\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/page_data.csv\",\"detailCSV\":\"http://www.webpagetest.org/result/150813_FE_e5fd27139876bc8ed69ed3628ced3280/requests.csv\"}}";
+			LogManager.infoLog("Response from runtest.php for TestId: "+testBean.getTestId()+" <> response: "+responseStream);
+			
 			String runTestCode = null;
-			if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
+			if( ! responseStream.startsWith("{") || ! responseStream.endsWith("}")) {
+				LogManager.errorLog("Response from runtest.php is not JSON for TestId: "+testBean.getTestId()+" <> response: "+responseStream);
+			} else {
 				JSONObject joResponse = JSONObject.fromObject(responseStream);
-				if(joResponse.containsKey("data")){
+				if( ! joResponse.containsKey("data") ) {
+					LogManager.errorLog("Response JSON from runtest.php does't ve `data` key, for TestId: "+testBean.getTestId()+" <> response: "+responseStream);
+				} else {
 					JSONObject joData = JSONObject.fromObject(joResponse.get("data"));
 					runTestCode = joData.getString("testId");
 				}
-
+				
 				// preparation of sum_har_results table
 				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
 				sumManager.updateMeasurementCntInUserMaster(testBean.getTestId());
 				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
-
+				
 				if( runTestCode != null){
 					int statusCheckStatus = 0;
 					int cnt = 1;
@@ -147,35 +151,44 @@ public class RunTest extends Thread {
 						method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
 						statusCode = client.executeMethod(method);
-
+						
 						// responseStream = "{\"statusCode\":200,\"statusText\":\"Test Complete\",\"data\":{\"statusCode\":200,\"statusText\":\"Test Complete\",\"id\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"testInfo\":{\"url\":\"http://apm.appedo.com\",\"runs\":1,\"fvonly\":0,\"web10\":0,\"ignoreSSL\":0,\"video\":\"0\",\"label\":\"TEST\",\"priority\":5,\"block\":\"null\",\"location\":\"Dulles\",\"browser\":\"Chrome\",\"connectivity\":\"Cable\",\"bwIn\":5000,\"bwOut\":1000,\"latency\":28,\"plr\":\"0\",\"tcpdump\":0,\"timeline\":0,\"trace\":0,\"bodies\":0,\"netlog\":0,\"standards\":0,\"noscript\":0,\"pngss\":0,\"iq\":50,\"keepua\":0,\"mobile\":0,\"tsview_id\":\"null\",\"scripted\":0},\"testId\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"runs\":1,\"fvonly\":0,\"remote\":false,\"testsExpected\":1,\"location\":\"Dulles\",\"startTime\":\"08/13/15 8:36:57\",\"elapsed\":32,\"completeTime\":\"08/13/15 8:37:29\",\"testsCompleted\":1,\"fvRunsCompleted\":1,\"rvRunsCompleted\":1}}";
-						responseStream = method.getResponseBodyAsString();
-						if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
+						responseStream = method.getResponseBodyAsString().trim();
+						if( ! responseStream.startsWith("{") || ! responseStream.endsWith("}") ) {
+							LogManager.errorLog("Response from testStatus.php is not JSON for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> response: "+responseStream);
+						} else {
 							joResponse = JSONObject.fromObject(responseStream);
 							statusCheckStatus = joResponse.getInt("statusCode");
+							
+							if( statusCheckStatus != 200 ) {
+								LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> "+statusCheckStatus);
+							}
+							
 							// To update har table status for showing in New SUM UI
 							// sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, 0, 0);
 						}
 						cnt++;
 					}
-					LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+testBean.getTestId());
-
+					LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+					
 					if( statusCheckStatus == 200 ){
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
-						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId());
+						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
 						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+runTestCode+"/");
 						// method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
 						statusCode = client.executeMethod(method);
 						responseStream = method.getResponseBodyAsString();
 						org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
-
+						
 						// TODO what is the response for stopped servers; Send SLA
-
+						
 /*						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
 							joResponse = JSONObject.fromObject(xmlJSONObj.toString());*/
-							if (xmlJSONObj.has("response") ) {
+							if ( ! xmlJSONObj.has("response") ) {
+								LogManager.infoLog("xmlJSONObj does not contain response: TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+							} else {
 								org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
 								if(jores.has("data")){
 									org.json.JSONObject joData = jores.getJSONObject("data");
@@ -186,7 +199,7 @@ public class RunTest extends Thread {
 											org.json.JSONObject joFView =  jorun.getJSONObject("firstView");
 											
 											if( joFView.has("status") && joFView.getString("status").length() > 0){
-												LogManager.infoLog("Status of the url configured with the  ID: "+testBean.getTestId()+"  - "+joFView.getString("status"));
+												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+"  - "+joFView.getString("status"));
 												isDowntime=true;
 											}
 										}
@@ -221,7 +234,7 @@ public class RunTest extends Thread {
 										joSLA.put("is_Down", isDowntime);
 										if( testBean.getThresholdValue()> 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ){
 											joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue()*1000)?"CRITICAL":"WARNING");
-											LogManager.infoLog("json sla for SUM Alert :: "+joSLA.toString());
+											LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
 											client = new HttpClient();
 											// URLEncoder.encode(requestUrl,"UTF-8");
 											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
@@ -246,10 +259,8 @@ public class RunTest extends Thread {
 									// Insert Json into db
 									sumManager.insertResultJson(joData, harId);
 								}
-							}else{
-								LogManager.infoLog("xmlJSONObj does not contain response: "+testBean.getTestId());
-						}
-						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId());
+							}
+						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
 						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
 						String saveDir = Constants.HAR_PATH+testBean.getTestId();
 						// Downloads har from wpt server and keep it in wpt_scheduler instance
@@ -282,7 +293,7 @@ public class RunTest extends Thread {
 		} catch (Exception ee) {
 			LogManager.errorLog(ee);
 		} finally {
-			LogManager.infoLog("Test Status: "+testBean.isStatus()+" Test ID: "+testBean.getTestId()+" Thread Id: "+Thread.currentThread().getId());
+			LogManager.infoLog("Test Status: "+testBean.isStatus()+" TestId: "+testBean.getTestId()+" Thread Id: "+Thread.currentThread().getId());
 		}
 	}
 	
