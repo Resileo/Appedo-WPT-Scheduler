@@ -92,7 +92,6 @@ public class SUMDBI {
 				}
 
 				if(rs.getString("browser_name")!=null){
-					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
 						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
 					} else {
@@ -241,7 +240,6 @@ public class SUMDBI {
 				}
 
 				if(rs.getString("browser_name")!=null){
-					System.out.println(rs.getString("browser_name"));
 					if( rs.getString("connection_name")!= null ){
 						testBean.setLocation(rs.getString("location")+":"+rs.getString("browser_name")+"."+rs.getString("connection_name"));
 					} else {
@@ -796,7 +794,7 @@ public class SUMDBI {
 	}
 
 
-	public void insertResultJson(Connection con, JSONObject joData, long harId) {
+	public void insertResultJson(Connection con, org.json.JSONObject joData, long harId) {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		Date dateLog = LogManager.logMethodStart();

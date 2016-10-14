@@ -199,7 +199,7 @@ public class SUMManager {
 		}
 	}
 
-	public void insertResultJson(JSONObject joData, long harId) {
+	public void insertResultJson(org.json.JSONObject joData, long harId) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
 		try {
