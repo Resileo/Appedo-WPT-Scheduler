@@ -89,10 +89,10 @@ public class SUMScheduler {
 			}
 			
 			synchronized ( setSUMLoc ) {
-				sumTestBean = setSUMLoc.iterator().next();
-				//setSUMLoc.iterator().remove();
-				setSUMLoc.remove(sumTestBean);
-				if( sumTestBean != null ){
+				if(setSUMLoc.iterator().hasNext()){
+					sumTestBean = setSUMLoc.iterator().next();
+					//setSUMLoc.iterator().remove();
+					setSUMLoc.remove(sumTestBean);
 				}
 				return sumTestBean;
 			}
@@ -112,7 +112,7 @@ public class SUMScheduler {
 				setSUMLoc = new LinkedHashSet<SUMTestBean>();
 				htSUMLocationTestQueues.put(strLocation, setSUMLoc);
 			}
-
+			
 			synchronized ( setSUMLoc ) {
 				ArrayList<SUMTestBean> sumTestBeans = new ArrayList<SUMTestBean>(setSUMLoc);
 				setSUMLoc.clear();
