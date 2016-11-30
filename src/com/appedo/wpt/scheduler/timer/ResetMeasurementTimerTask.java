@@ -19,6 +19,9 @@ public class ResetMeasurementTimerTask extends TimerTask{
 	public void run() {
 		SUMDBI sumdbi = null;
 		try {
+			if( ! DataBaseManager.isConnectionExists(con) ){
+				con = DataBaseManager.reEstablishConnection(con);
+			}
 			sumdbi = new SUMDBI();
 			sumdbi.resetMeasurements(con);
 		} catch (Exception e) {

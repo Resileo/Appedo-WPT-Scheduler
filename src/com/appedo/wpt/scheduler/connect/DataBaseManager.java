@@ -405,7 +405,7 @@ public class DataBaseManager {
 				LogManager.infoLog("Trying to establish DB connection.");
 				connNew = giveConnection();
 			} catch(Exception exConReEstablish) {
-				LogManager.errorLog(exConReEstablish);
+				LogManager.errorLog("DB-Connection re-establish not yet made.");
 			}
 		}
 		
