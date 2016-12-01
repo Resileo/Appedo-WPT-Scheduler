@@ -44,7 +44,7 @@ public class DataBaseManager {
 	 * 
 	 */
 	public static Connection con;
-    private static GenericObjectPool connectionPool = null;
+	private static GenericObjectPool connectionPool = null;
 	private static PoolingDataSource dataSource = null;
 
 	/**
@@ -95,17 +95,17 @@ public class DataBaseManager {
 	 * @return Connection creation status
 	 * @throws Exception
 	 */
-    private static boolean connect(String configFilePath) throws Exception{
-        try {
-        	getDetails(configFilePath);
+	private static boolean connect(String configFilePath) throws Exception{
+		try {
+			getDetails(configFilePath);
 			
-        	// create connection pool
+			// create connection pool
 			connectionPool = new GenericObjectPool(null);
 			connectionPool.setMaxActive(maxActive);
 			connectionPool.setMaxWait(maxWait);
 			
-        	Class.forName(driver).newInstance();
-        	String dbURL = "jdbc:"+protocal+"://"+dbHostName+":"+port+"/"+dbName+"?autoReconnect=true";
+			Class.forName(driver).newInstance();
+			String dbURL = "jdbc:"+protocal+"://"+dbHostName+":"+port+"/"+dbName+"?autoReconnect=true";
 			String connectURI = dbURL+"&user="+userName+"&password="+password;
 			//System.out.println("connectURI: "+connectURI);
 			// create Connection factory
@@ -121,12 +121,12 @@ public class DataBaseManager {
 			// create pool data source
 			dataSource = new PoolingDataSource(connectionPool);
 			connEstb = true;
-        } catch (Exception e) {
-        	LogManager.errorLog(e);
-        	throw e;
-        }
-        return true;
-    }
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+			throw e;
+		}
+		return true;
+	}
 
 	/**
 	 * @method Open database connection from pooling
@@ -152,11 +152,11 @@ public class DataBaseManager {
 		}
 		return conn;
 	}*/
-    
+	
 	/**
 	 * @return a connection form the Pool.
 	 */
-    public static Connection giveConnection() {
+	public static Connection giveConnection() {
 		Connection con = null;
 		try{
 			con = dataSource.getConnection();
@@ -170,12 +170,12 @@ public class DataBaseManager {
 			LogManager.errorLog(e);
 		}
 		return con;
-    }
+	}
 
-    /**
-     * Print the status of the Pool.
-     *
-     */
+	/**
+	 * Print the status of the Pool.
+	 *
+	 */
 	public static void printStatus(){
 		LogManager.infoLog("returning static dataSource: "+connectionPool.getNumIdle()+"<>"+connectionPool.getNumActive());
 	}
@@ -271,19 +271,19 @@ public class DataBaseManager {
 	}
 	
 
-    /**
-     * Insert the data with given Query. Then extract the auto-generated key(primary key) from Statement and return it.
-     *  
-     * @param con
-     * @param strQuery
-     * @return
-     */
-    public static long insertAndReturnKey(Connection con, String strQuery) throws Exception {
-    	Statement stmt = null;
-    	long lGeneratedKey = -1l;
-    	
-    	try{
-    		stmt = con.createStatement();
+	/**
+	 * Insert the data with given Query. Then extract the auto-generated key(primary key) from Statement and return it.
+	 * 
+	 * @param con
+	 * @param strQuery
+	 * @return
+	 */
+	public static long insertAndReturnKey(Connection con, String strQuery) throws Exception {
+		Statement stmt = null;
+		long lGeneratedKey = -1l;
+		
+		try{
+			stmt = con.createStatement();
 			stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
 			
 			//condition to check resultset containing values or not
@@ -291,85 +291,83 @@ public class DataBaseManager {
 			while( rstPrimaryKey.next() ){
 				lGeneratedKey = rstPrimaryKey.getLong(1);
 			}
-    	} catch(Exception e){
-    		throw e;
-    	} finally {
-    		close(stmt);
-    		stmt = null;
-    	}
-    	
-    	return lGeneratedKey;
-    }
-    
-    public static long insertAndReturnKey(Statement stmt, String strQuery) throws Exception {
-    	long lGeneratedKey = -1l;
-    	
-    	try{
-    		stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
+		} catch(Exception e){
+			throw e;
+		} finally {
+			close(stmt);
+			stmt = null;
+		}
+		
+		return lGeneratedKey;
+	}
+	
+	public static long insertAndReturnKey(Statement stmt, String strQuery) throws Exception {
+		long lGeneratedKey = -1l;
+		
+		try{
+			stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
 	
 			//condition to check resultset containing values or not
 			ResultSet rstPrimaryKey = stmt.getGeneratedKeys();
 			while( rstPrimaryKey.next() ){
 				lGeneratedKey = rstPrimaryKey.getLong(1);
 			}
-    	} catch(Exception e){
-    		throw e;
-    	}
-    	
-    	return lGeneratedKey;
-    }
-    
-    /**
-     * Returns last insert key 
-     * 
-     * @param stmt
-     * @return
-     * @throws Exception
-     */
-    public static long returnKey(Statement stmt) throws Exception {
-    	long lGeneratedKey = -1l;
-    	
-    	try{
-    		//stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
+		} catch(Exception e){
+			throw e;
+		}
+		
+		return lGeneratedKey;
+	}
+	
+	/**
+	 * Returns last insert key 
+	 * 
+	 * @param stmt
+	 * @return
+	 * @throws Exception
+	 */
+	public static long returnKey(Statement stmt) throws Exception {
+		long lGeneratedKey = -1l;
+		
+		try{
+			//stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
 	
 			//condition to check resultset containing values or not
 			ResultSet rstPrimaryKey = stmt.getGeneratedKeys();
 			while( rstPrimaryKey.next() ){
 				lGeneratedKey = rstPrimaryKey.getLong(1);
 			}
-    	} catch(Exception e){
-    		throw e;
-    	}
-    	
-    	return lGeneratedKey;
-    }
-    
-    /**
-     * Returns last inserted key 
-     * 
-     * @param pstmt
-     * @return
-     * @throws Exception
-     */
-    public static long returnKey(PreparedStatement pstmt) throws Exception {
-    	long lGeneratedKey = -1l;
-    	
-    	try{
-    		//stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
+		} catch(Exception e){
+			throw e;
+		}
+		
+		return lGeneratedKey;
+	}
+	
+	/**
+	 * Returns last inserted key 
+	 * 
+	 * @param pstmt
+	 * @return
+	 * @throws Exception
+	 */
+	public static long returnKey(PreparedStatement pstmt) throws Exception {
+		long lGeneratedKey = -1l;
+		
+		try{
+			//stmt.execute(strQuery, Statement.RETURN_GENERATED_KEYS);
 	
 			//condition to check resultset containing values or not
 			ResultSet rstPrimaryKey = pstmt.getGeneratedKeys();
 			while( rstPrimaryKey.next() ){
 				lGeneratedKey = rstPrimaryKey.getLong(1);
 			}
-    	} catch(Exception e){
-    		throw e;
-    	}
-    	
-    	return lGeneratedKey;
-    }
-    
-
+		} catch(Exception e){
+			throw e;
+		}
+		
+		return lGeneratedKey;
+	}
 	
 	/**
 	 * Check whether connection is alive or not.
