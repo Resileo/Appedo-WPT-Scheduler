@@ -52,9 +52,6 @@ public class ScheduledLocationTracker extends TimerTask {
 			StringBuilder keyStrbuildr = null;
 			client = new HttpClient();
 
-			LogManager.infoLog(" frequent mail triggered in test environment : existingAgentsFromDb :"+existingAgentsFromDb);
-			LogManager.infoLog(" frequent mail triggered in test environment : activeAgentsFromDb :"+activeAgentsFromDb);
-
 			//method = new PostMethod("http://23.23.129.228/getLocations.php");
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"getLocations.php");
 			method.addParameter("f", "json");
@@ -68,23 +65,23 @@ public class ScheduledLocationTracker extends TimerTask {
 				joResponse = JSONObject.fromObject(responseStream);
 				if (!joResponse.getString("data").equals("[]")) {
 					JSONObject locationresp = (JSONObject) joResponse.get("data");
-					for (Object key: locationresp.keySet()) {
+					for (Object key : locationresp.keySet()) {
 						String keyStr = (String) key;
-						if(keyStr.split(":").length==2){
-							activeDesktopAgents.add(keyStr.split(":")[0]);	
-						}else if(keyStr.split(":").length==1){
+						if (keyStr.split(":").length == 2) {
+							activeDesktopAgents.add(keyStr.split(":")[0]);
+						} else if (keyStr.split(":").length == 1) {
 							activeMobileAgents.add(keyStr.split(":")[0]);
 						}
 						allActiveAgentsInApi.add(keyStr.split(":")[0]);
 					}
 
 					// To alert admin/devops when active Agents are inActive
-					for (String strAgent: activeAgentsFromDb) {
+					for (String strAgent : activeAgentsFromDb) {
 						if (!allActiveAgentsInApi.contains(strAgent)) {
 							jaInActivenodes.add(strAgent);
 						}
 					}
-					if(jaInActivenodes.size() != 0 && jaInActivenodes !=null){
+					if (jaInActivenodes.size() != 0 && jaInActivenodes != null) {
 						joNodeAlert.put("inactive_nodes", jaInActivenodes.toString());
 					}
 
