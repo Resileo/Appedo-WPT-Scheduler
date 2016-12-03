@@ -819,7 +819,7 @@ public class SUMDBI {
 	 * Retrieves all the Existing WPT agents.
 	 * 
 	 * @param con
-	 * @return
+	 * @return HashSet<String>
 	 * @throws Exception
 	 */
 	public HashSet<String> extractExistingAgents(Connection con) throws Exception {
@@ -850,7 +850,7 @@ public class SUMDBI {
 	 * Retrieves the active WPT agents.
 	 * 
 	 * @param con
-	 * @return
+	 * @return HashSet<String>
 	 * @throws Exception
 	 */
 	public HashSet<String> extractActiveAgents(Connection con) throws Exception {
@@ -878,11 +878,11 @@ public class SUMDBI {
 	}
 	
 	/**
-	 *  Insert New WPT Desktop Agents.
+	 * Insert New WPT Desktop Agents.
 	 * 
 	 * @param con
 	 * @param locToUpadate
-	 * @return
+	 * @return boolean
 	 * @throws Exception
 	 */
 	public boolean insertNewDesktopAgents(Connection con, Set < String > locToUpadate) throws Exception {
@@ -896,29 +896,27 @@ public class SUMDBI {
 			for (String locToinsert: locToUpadate) {
 				sbQuery = new StringBuilder();
 				sbQuery.append("INSERT INTO sum_node_details (")
-					.append("sum_user_id,mac_address,agent_type,ipaddress,city,state,country,latitude,")
-					.append("longitude,selenium_webdriver_version,jre_version,firebug_version,netexport_version,")
-					.append("os_type,operating_system,os_version,chrome_version,created_by,created_on,sum_node_status,sum_agent_version) ")
-					.append("values (1,'")
+					.append("sum_user_id, mac_address, agent_type, ipaddress, city, state, country, latitude, ")
+					.append("longitude, selenium_webdriver_version, jre_version, firebug_version, netexport_version, ")
+					.append("os_type, operating_system, os_version, chrome_version, created_by, created_on, sum_node_status, sum_agent_version) ")
+					.append("VALUES (1, '")
 					.append(1 - new Random().nextInt())
-					.append("','wpt_Desktop_Agent','NA','")
+					.append("', 'wpt_Desktop_Agent', 'NA', '")
 					.append(locToinsert.split("--")[1])
-					.append("','NA','")
+					.append("', 'NA', '")
 					.append(locToinsert.split("--")[0])
-					.append("','0.0','0.0','NA','NA','NA','NA','Windows','windows server 2008 r2','3.13.0-32-generic'")
-					.append(",'NA',-1,now(),'active','null-1.0.13')");
+					.append("', '0.0', '0.0', 'NA', 'NA', 'NA', 'NA', 'Windows', 'windows server 2008 r2', '3.13.0-32-generic'")
+					.append(", 'NA', -1, NOW(), 'active', 'null-1.0.13')");
 				
 				pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 				pstmt.executeUpdate();
 				lKeyId = DataBaseManager.returnKey(pstmt);
-
-
+				
 				if(lKeyId != -1l){
 					sbQuery.setLength(0);
 					sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
-					.append("sum_device_os_browser WHERE node_id =")
-					.append(lKeyId)
-					.append(" AND dob_id IN (select dob_id from sum_device_os_browser where device_type='DESKTOP')");
+					.append("sum_device_os_browser WHERE node_id = ").append(lKeyId)
+					.append(" AND dob_id IN (SELECT dob_id FROM sum_device_os_browser WHERE device_type = 'DESKTOP')");
 
 					LogManager.infoLog("frequent mail triggered in test environment : Insert query 1 "+sbQuery.toString());
 					pstmt1 = con.prepareStatement(sbQuery.toString());
@@ -954,7 +952,7 @@ public class SUMDBI {
 	 * 
 	 * @param con
 	 * @param locToUpadate
-	 * @return
+	 * @return boolean
 	 * @throws Exception 
 	 */
 	public boolean insertNewMobileAgents(Connection con, Set < String > locToUpadate) throws Exception {
@@ -968,27 +966,27 @@ public class SUMDBI {
 			for (String locToinsert: locToUpadate) {
 				sbQuery = new StringBuilder();
 				sbQuery.append("INSERT INTO sum_node_details (")
-					.append("sum_user_id,mac_address,agent_type,ipaddress,city,state,country,latitude,")
-					.append("longitude,selenium_webdriver_version,jre_version,firebug_version,netexport_version,")
-					.append("os_type,operating_system,os_version,chrome_version,created_by,created_on,sum_node_status,sum_agent_version) ")
-					.append("values (1,'")
+					.append("sum_user_id, mac_address, agent_type, ipaddress, city, state, country, latitude,")
+					.append("longitude, selenium_webdriver_version, jre_version, firebug_version, netexport_version, ")
+					.append("os_type, operating_system, os_version, chrome_version, created_by, created_on, sum_node_status, sum_agent_version) ")
+					.append("VALUES (1, '")
 					.append(1 - new Random().nextInt())
-					.append("','wpt_Mobile_Agent','NA','")
+					.append("', 'wpt_Mobile_Agent', 'NA', '")
 					.append(locToinsert.split("--")[1])
-					.append("','NA','")
+					.append("', 'NA', '")
 					.append(locToinsert.split("--")[0])
-					.append("','0.0','0.0','NA','NA','NA','NA','ANDROID','ANDROID','3.13.0-32-generic'")
-					.append(",'NA',-1,now(),'active','null-1.0.13')");
-				//pstmt = con.prepareStatement(sbQuery.toString());
+					.append("', '0.0', '0.0', 'NA', 'NA', 'NA', 'NA', 'ANDROID', 'ANDROID', '3.13.0-32-generic'")
+					.append(", 'NA', -1, now(), 'active', 'null-1.0.13')");
+				
 				pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 				pstmt.executeUpdate();
 				lKeyId = DataBaseManager.returnKey(pstmt);
 				if(lKeyId != -1l){
 					sbQuery.setLength(0);
-					sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id,device_os_browser_id) SELECT node_id,dob_id FROM sum_node_details,")
-					.append("sum_device_os_browser WHERE node_id =")
+					sbQuery.append("INSERT INTO sum_node_device_os_browser (sum_node_id, device_os_browser_id) SELECT node_id, dob_id FROM sum_node_details,")
+					.append("sum_device_os_browser WHERE node_id = ")
 					.append(lKeyId)
-					.append(" AND dob_id IN (select dob_id from sum_device_os_browser where device_type='MOBILE')");
+					.append(" AND dob_id IN (SELECT dob_id FROM sum_device_os_browser WHERE device_type='MOBILE')");
 					pstmt1 = con.prepareStatement(sbQuery.toString());
 					int count = pstmt1.executeUpdate();
 					if(count > 0){
@@ -1040,7 +1038,14 @@ public class SUMDBI {
 		}
 	}
 	
-	public void updateAllAgentsInactive(Connection con) {
+	/**
+	 * To update all the WPT agents as inactive when the 'https://wpt.appedo.com/getLocations.php' has
+	 * no locations in it.
+	 * 
+	 * @param con
+	 * @throws Exception 
+	 */
+	public void updateAllAgentsInactive(Connection con) throws Exception {
 		Date dateLog = LogManager.logMethodStart();
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
@@ -1048,9 +1053,10 @@ public class SUMDBI {
 			sbQuery.append("UPDATE sum_node_details SET sum_node_status = 'Inactive'");
 			pstmt = con.prepareStatement(sbQuery.toString());
 			pstmt.executeUpdate();
-			LogManager.infoLog("All WPT_Agent's status have been updated to Inactive on : "+new Date());
+			LogManager.infoLog("All WPT_Agent's status have been updated to Inactive on : " + new Date());
 		} catch (Exception ex) {
 			LogManager.errorLog(ex);
+			throw ex;
 		}finally{
 			LogManager.logMethodEnd(dateLog);
 			DataBaseManager.close(pstmt);

@@ -34,8 +34,8 @@ public class ScheduledLocationTracker extends TimerTask {
 		JSONObject joNodeAlert = null;
 		JSONArray jaInActivenodes = null;
 		SUMDBI sumdbi = null;
-		Set<String> existingAgentsFromDb = null, activeAgentsFromDb = null, allActiveAgentsInApi = null, activeDesktopAgents = null, activeMobileAgents = null,
-				desktopAgentsToInsert = null,mobileAgentsToInsert = null;
+		Set<String> existingAgentsFromDb = null, activeAgentsFromDb = null, allActiveAgentsInApi = null, activeDesktopAgents = null, 
+				activeMobileAgents = null, desktopAgentsToInsert = null, mobileAgentsToInsert = null;
 
 		try {
 			allActiveAgentsInApi = new HashSet<String>();
@@ -49,10 +49,10 @@ public class ScheduledLocationTracker extends TimerTask {
 			jaInActivenodes = new JSONArray();
 			existingAgentsFromDb = sumdbi.extractExistingAgents(con);
 			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
-			StringBuilder keyStrbuildr = null;
+			StringBuilder activeNodesStrbuildr = null;
 			client = new HttpClient();
 
-			//method = new PostMethod("http://23.23.129.228/getLocations.php");
+			//method = new PostMethod("https://wpt.appedo.com/getLocations.php");
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"getLocations.php");
 			method.addParameter("f", "json");
 			method.setRequestHeader("Connection", "close");
@@ -61,7 +61,7 @@ public class ScheduledLocationTracker extends TimerTask {
 			String responseStream = method.getResponseBodyAsString();
 
 			if (statusCode == HttpURLConnection.HTTP_OK && responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
-				keyStrbuildr = new StringBuilder();
+				activeNodesStrbuildr = new StringBuilder();
 				joResponse = JSONObject.fromObject(responseStream);
 				if (!joResponse.getString("data").equals("[]")) {
 					JSONObject locationresp = (JSONObject) joResponse.get("data");
@@ -88,12 +88,10 @@ public class ScheduledLocationTracker extends TimerTask {
 					Iterator<String> itr= allActiveAgentsInApi.iterator();
 					while(itr.hasNext()){
 						String keyStr = (String) itr.next();
-						keyStrbuildr.append("'")
-							.append(keyStr.split(":")[0])
-							.append("',");
+						activeNodesStrbuildr.append("'").append(keyStr.split(":")[0]).append("',");
 					}
-					keyStrbuildr.deleteCharAt(keyStrbuildr.lastIndexOf(","));
-					String activeNodes = keyStrbuildr.toString();
+					activeNodesStrbuildr.deleteCharAt(activeNodesStrbuildr.lastIndexOf(","));
+					String activeNodes = activeNodesStrbuildr.toString();
 						//update inactive locations in DB
 						sumdbi.updateInactiveAgents(activeNodes, con);
 
@@ -148,7 +146,7 @@ public class ScheduledLocationTracker extends TimerTask {
 					LogManager.infoLog("No locations found in getLocations.php API");
 				}
 			} else {
-				LogManager.infoLog("No response from wpt server. Response status code : "+ statusCode);
+				LogManager.infoLog("No response from WPT server. Response status code : "+ statusCode);
 			}
 		} catch (Throwable e) {
 			LogManager.errorLog(e);
