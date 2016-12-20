@@ -38,6 +38,8 @@ public class ScheduledLocationTracker extends TimerTask {
 				activeMobileAgents = null, desktopAgentsToInsert = null, mobileAgentsToInsert = null;
 
 		try {
+			con = DataBaseManager.reEstablishConnection(con);
+			
 			allActiveAgentsInApi = new HashSet<String>();
 			activeDesktopAgents = new HashSet<String>();
 			activeMobileAgents = new HashSet<String>();
