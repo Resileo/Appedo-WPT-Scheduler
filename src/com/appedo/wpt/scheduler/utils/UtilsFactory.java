@@ -23,8 +23,8 @@ import org.postgresql.util.PGobject;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 
 /**
  * Class which do some utilization operation.

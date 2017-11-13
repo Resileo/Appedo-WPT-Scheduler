@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.util.TimerTask;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 
@@ -23,7 +23,7 @@ public class SUMAuditLogTimerTask extends TimerTask{
 	public SUMAuditLogTimerTask(int nLogTimerIndex) {
 		try {
 			this.nLogTimerIndex = nLogTimerIndex;
-			DataBaseManager.doConnectionSetupIfRequired(Constants.APPEDO_CONFIG_FILE_PATH);
+			DataBaseManager.doConnectionSetupIfRequired("", Constants.APPEDO_CONFIG_FILE_PATH, true);
 			this.con = DataBaseManager.giveConnection();
 		} catch (Exception e) {
 			LogManager.errorLog(e);
