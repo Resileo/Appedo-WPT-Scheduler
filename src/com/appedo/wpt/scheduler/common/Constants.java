@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
+import com.appedo.manager.AppedoConstants;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
@@ -14,6 +15,8 @@ import com.appedo.wpt.scheduler.utils.UtilsFactory;
  *
  */
 public class Constants {
+	
+	public static boolean DEV_ENVIRONMENT = false;
 	
 	//public final static String CONFIGFILEPATH = InitServlet.realPath+"/WEB-INF/classes/com/softsmith/floodgates/resource/config.properties";
 	public static String CONSTANTS_FILE_PATH = "";
@@ -40,21 +43,21 @@ public class Constants {
 	 * @param srtConstantsPath
 	 */
 	public static void loadConstantsProperties(String srtConstantsPath) throws Exception {
-    	Properties prop = new Properties();
-    	InputStream is = null;
-    	
-        try {
-    		is = new FileInputStream(srtConstantsPath);
-    		prop.load(is);
-    		
-     		// Appedo application's resource directory path
-     		RESOURCE_PATH = prop.getProperty("RESOURCE_PATH");
-     		
-     		APPEDO_CONFIG_FILE_PATH = RESOURCE_PATH+prop.getProperty("APPEDO_CONFIG_FILE_PATH");
-     		
-     		PATH = RESOURCE_PATH+prop.getProperty("Path");
-     		
-     		INTERVAL = Integer.parseInt(prop.getProperty("queryinterval"));
+		Properties prop = new Properties();
+		InputStream is = null;
+		
+		try {
+			is = new FileInputStream(srtConstantsPath);
+			prop.load(is);
+			
+			// Appedo application's resource directory path
+			RESOURCE_PATH = prop.getProperty("RESOURCE_PATH");
+			
+			APPEDO_CONFIG_FILE_PATH = RESOURCE_PATH+prop.getProperty("APPEDO_CONFIG_FILE_PATH");
+			
+			PATH = RESOURCE_PATH+prop.getProperty("Path");
+			
+			INTERVAL = Integer.parseInt(prop.getProperty("queryinterval"));
 			
 			TIMER_PERIOD = Long.parseLong(prop.getProperty("node_status__check_period_in_sec"));
 			
@@ -72,34 +75,70 @@ public class Constants {
 			LogManager.errorLog(th);
 			
 			throw th;
-        } finally {
-        	UtilsFactory.close(is);
-        	is = null;
-        }	
+		} finally {
+			UtilsFactory.close(is);
+			is = null;
+		}	
 	}
 
 
 	public static void loadAppedoConfigProperties(String strAppedoConfigPath) throws Exception {
-    	Properties prop = new Properties();
-    	InputStream is = null;
-    	
-        try {
-    		is = new FileInputStream(strAppedoConfigPath);
-    		prop.load(is);
-     		
-     		// Url to delete har files from har repository
-    		EXPORT_URL = prop.getProperty("URL_TO_EXPORT_HAR");	
-    		APPEDO_SLA_COLLECTOR = prop.getProperty("APPEDO_SLA_COLLECTOR");
-    		WPT_LOCATION_SERVER = prop.getProperty("WPT_LOCATION_SERVER");
-     		
-     		// Webservice collector
-        } catch(Exception e) {
-        	LogManager.errorLog(e);
-        	throw e;
-        } finally {
-        	UtilsFactory.close(is);
-        	is = null;
-        }	
+		Properties prop = new Properties();
+		InputStream is = null;
+		
+		try {
+			is = new FileInputStream(strAppedoConfigPath);
+			prop.load(is);
+			
+			if( prop.getProperty("ENVIRONMENT") != null && prop.getProperty("ENVIRONMENT").equals("DEVELOPMENT") 
+					&& AppedoConstants.getAppedoConfigProperty("ENVIRONMENT") != null && AppedoConstants.getAppedoConfigProperty("ENVIRONMENT").equals("DEVELOPMENT") ) 
+			{
+				DEV_ENVIRONMENT = true;
+			}
+			
+			// Url to delete har files from har repository
+			EXPORT_URL = getProperty("URL_TO_EXPORT_HAR", prop);
+			APPEDO_SLA_COLLECTOR = getProperty("APPEDO_SLA_COLLECTOR", prop);
+			WPT_LOCATION_SERVER = getProperty("WPT_LOCATION_SERVER", prop);
+			
+		} catch(Exception e) {
+			LogManager.errorLog(e);
+			throw e;
+		} finally {
+			UtilsFactory.close(is);
+			is = null;
+		}	
 	}
 	
+	/**
+	 * loads AppedoConstants, 
+	 * of loads Appedo whitelabels, replacement of word `Appedo` as configured in DB
+	 * 
+	 * @param strAppedoConfigPath
+	 * @throws Exception
+	 */
+	public static void loadAppedoConstants(String strAppedoConfigPath) throws Exception {
+		
+		try {
+			AppedoConstants.getAppedoConstants().loadAppedoConstants(strAppedoConfigPath);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+	
+	/**
+	 * Get the property's value from appedo_config.properties, if it is DEV environment;
+	 * Otherwise get the property's value from DB.
+	 * 
+	 * @param strPropertyName
+	 * @param prop
+	 * @return
+	 */
+	private static String getProperty(String strPropertyName, Properties prop) {
+		if( DEV_ENVIRONMENT && prop.getProperty(strPropertyName) != null )
+			return prop.getProperty(strPropertyName);
+		else
+			return AppedoConstants.getAppedoConfigProperty("SLA_SETTING_MAX_TRY_COUNT");
+
+	}
 }

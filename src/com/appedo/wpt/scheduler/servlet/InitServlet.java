@@ -58,6 +58,10 @@ public class InitServlet extends HttpServlet {
 			// Loads Constant properties 
 			Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
 			
+			// loads Appedo constants: WhiteLabels, Config-Properties
+			Constants.loadAppedoConstants(Constants.APPEDO_CONFIG_FILE_PATH);
+			
+			// Loads Appedo config properties from DB (or) the system path
 			Constants.loadAppedoConfigProperties(Constants.APPEDO_CONFIG_FILE_PATH);
 			
 			// Loads db config
