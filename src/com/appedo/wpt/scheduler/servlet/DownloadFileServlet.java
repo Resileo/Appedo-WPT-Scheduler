@@ -32,14 +32,14 @@ public class DownloadFileServlet extends HttpServlet {
 	FileInputStream inputStream = null;
 	OutputStream outputStream = null;
 	BufferedReader reader = null;
-         
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public DownloadFileServlet() {
-        super();
-        // TODO Auto-generated constructor stub
-    }
+	
+	/**
+	 * @see HttpServlet#HttpServlet()
+	 */
+	public DownloadFileServlet() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -75,53 +75,55 @@ public class DownloadFileServlet extends HttpServlet {
 			SUMTestBean sumTestBean = (SUMTestBean)oaReturn[0];
 			// long lLogId = 0;
 			String logId = "0";
-			 if(oaReturn[1] != null){
-				 logId = ((SUMAuditLogBean)oaReturn[1]).getCreatedOn();
-			 }
+			
+			if(oaReturn[1] != null){
+				logId = ((SUMAuditLogBean)oaReturn[1]).getCreatedOn();
+			}
+			
 			// no Test is available in queue. So ask agent to wait for some more time.
 			if( sumTestBean == null ){
 				response.setHeader("test_id", "-1" );
-				 response.setHeader("log_id", "0");
+				response.setHeader("log_id", "0");
 			} else {
-		        // obtains ServletContext
-		        ServletContext context = getServletContext();
-		        response.setHeader("test_id", Long.toString(sumTestBean.getTestId()) );
-		        response.setHeader("url", sumTestBean.getURL());
-		        response.setHeader("test_type", sumTestBean.getTestType());
-		        response.setHeader("log_id", logId);
-		        
-		        if( sumTestBean.getTestType().toUpperCase().equals("TRANSACTION") ){
-		        	
-			        response.setHeader("class_name", sumTestBean.getTestClassName());
-			        
+				// obtains ServletContext
+				ServletContext context = getServletContext();
+				response.setHeader("test_id", Long.toString(sumTestBean.getTestId()) );
+				response.setHeader("url", sumTestBean.getURL());
+				response.setHeader("test_type", sumTestBean.getTestType());
+				response.setHeader("log_id", logId);
+				
+				if( sumTestBean.getTestType().toUpperCase().equals("TRANSACTION") ){
+					
+					response.setHeader("class_name", sumTestBean.getTestClassName());
+					
 					// reads input file from an absolute path
 					String filePath = Constants.SELENIUM_SCRIPT_CLASS_FILE_PATH;
-			        File downloadFile = new File( filePath+File.separator+sumTestBean.getTestClassName()+".class" );
-//			        System.out.println("downloadFile: "+downloadFile.getAbsolutePath());
-			        FileInputStream inStream = new FileInputStream(downloadFile);
-			        // gets MIME type of the file
-			        String mimeType = context.getMimeType(filePath);
-			        if (mimeType == null) {
-			            // set to binary type if MIME mapping not found
-			            mimeType = "application/octet-stream";
-			        }
-			        
-			        // modifies response
-			        response.setContentType(mimeType);
-			        response.setContentLength((int) downloadFile.length());
-			        
-			        // obtains response's output stream
-			        OutputStream outStream = response.getOutputStream();
-			        
-			        byte[] buffer = new byte[4096];
-			        int bytesRead = -1;
-			        while ((bytesRead = inStream.read(buffer)) != -1) {
-			            outStream.write(buffer, 0, bytesRead);
-			        }
-			       inStream.close();
-			       outStream.close();
-		        }
-		    }
+					File downloadFile = new File( filePath+File.separator+sumTestBean.getTestClassName()+".class" );
+//					System.out.println("downloadFile: "+downloadFile.getAbsolutePath());
+					FileInputStream inStream = new FileInputStream(downloadFile);
+					// gets MIME type of the file
+					String mimeType = context.getMimeType(filePath);
+					if (mimeType == null) {
+						// set to binary type if MIME mapping not found
+						mimeType = "application/octet-stream";
+					}
+					
+					// modifies response
+					response.setContentType(mimeType);
+					response.setContentLength((int) downloadFile.length());
+					
+					// obtains response's output stream
+					OutputStream outStream = response.getOutputStream();
+					
+					byte[] buffer = new byte[4096];
+					int bytesRead = -1;
+					while ((bytesRead = inStream.read(buffer)) != -1) {
+						outStream.write(buffer, 0, bytesRead);
+					}
+					inStream.close();
+					outStream.close();
+				}
+			}
 		} catch( Exception ex ){
 			LogManager.errorLog(ex);
 		}
@@ -134,24 +136,24 @@ public class DownloadFileServlet extends HttpServlet {
 			// Get class file name
 			String strClaassFile = request.getHeader("class-name");
 			
-				File saveFile = new File(Constants.SELENIUM_SCRIPT_CLASS_FILE_PATH+strClaassFile);
-				InputStream inputStream = request.getInputStream();
-				// opens an output stream for writing file
-				FileOutputStream outputStream = new FileOutputStream(saveFile);
-				
-				byte[] buffer = new byte[BUFFER_SIZE];
-				int bytesRead = -1;
-//				System.out.println("Receiving data...");
-				while ((bytesRead = inputStream.read(buffer)) != -1) {
-					outputStream.write(buffer, 0, bytesRead);
-				}
-				outputStream.close();
-				inputStream.close();
-				LogManager.infoLog("File written to: " + saveFile.getAbsolutePath());
-				// sends response to client
-				response.getWriter().print("success");
+			File saveFile = new File(Constants.SELENIUM_SCRIPT_CLASS_FILE_PATH+strClaassFile);
+			InputStream inputStream = request.getInputStream();
+			// opens an output stream for writing file
+			FileOutputStream outputStream = new FileOutputStream(saveFile);
 			
-		}catch(Throwable t) {
+			byte[] buffer = new byte[BUFFER_SIZE];
+			int bytesRead = -1;
+//				System.out.println("Receiving data...");
+			while ((bytesRead = inputStream.read(buffer)) != -1) {
+				outputStream.write(buffer, 0, bytesRead);
+			}
+			outputStream.close();
+			inputStream.close();
+			LogManager.infoLog("File written to: " + saveFile.getAbsolutePath());
+			// sends response to client
+			response.getWriter().print("success");
+			
+		} catch(Throwable t) {
 			LogManager.errorLog(t);
 			throw t;
 		}
