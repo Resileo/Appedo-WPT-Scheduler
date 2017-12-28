@@ -55,6 +55,8 @@ public class TransactionResult extends HttpServlet {
 		String responseStream = "";
 		JSONObject joResponse = null;
 		boolean isDowntime = false;
+		double repeatLoadTime = 0, firstLoadTime = 0;
+		
 		try {
 			con = DataBaseManager.giveConnection();
 			long test_id = Long.valueOf(request.getParameter("testid"));
@@ -62,7 +64,9 @@ public class TransactionResult extends HttpServlet {
 			//statusCode = Integer.valueOf(request.getParameter("statuscode"));
 			//String statusText = request.getParameter("statustext");
 			String location = request.getParameter("location");
+			
 			SUMManager sumManager = new SUMManager();
+			
 			//update the details in db.
 			LogManager.infoLog("Transaction update started for test id :"+test_id+" and location :"+location);
 			long harId = sumManager.insertHarTable(test_id, -1,"", wpt_test_code,location+":CHROME.Native");
@@ -98,29 +102,39 @@ public class TransactionResult extends HttpServlet {
 				}
 				LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
 			
-
-			if( statusCheckStatus == 200 ){
-				client = new HttpClient();
-				// URLEncoder.encode(requestUrl,"UTF-8");
-				LogManager.infoLog("Before jsonResult.php for TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
-				method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+wpt_test_code+"/");
-				// method.addParameter("test", wpt_test_code);
-				method.setRequestHeader("Connection", "close");
-				statusCode = client.executeMethod(method);
-				responseStream = method.getResponseBodyAsString();
-				org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
-/*				if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
-					joResponse = JSONObject.fromObject(xmlJSONObj.toString());*/
+				if( statusCheckStatus == 200 ){
+					client = new HttpClient();
+					// URLEncoder.encode(requestUrl,"UTF-8");
+					LogManager.infoLog("Before jsonResult.php for TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
+					method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+wpt_test_code+"/");
+					// method.addParameter("test", wpt_test_code);
+					method.setRequestHeader("Connection", "close");
+					statusCode = client.executeMethod(method);
+					responseStream = method.getResponseBodyAsString();
+					
+					org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
 					if (xmlJSONObj.has("response")) {
 						org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
-						if(jores.has("data")){
+						if( jores.has("data") ) {
 							org.json.JSONObject joData = jores.getJSONObject("data");
 							
-							if( joData.has("average") ){
+							if( joData.has("run") && joData.getJSONObject("run").has("firstView") && joData.getJSONObject("run").getJSONObject("firstView").has("step") ) {
+								
+								firstLoadTime = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step")
+														.getJSONObject(0)	// Get first element's loadTime
+														.getJSONObject("results").getInt("loadTime");
+								
+								if( joData.has("run") && joData.getJSONObject("run").has("repeatView") && joData.getJSONObject("run").getJSONObject("repeatView").has("step") ) {
+									
+									repeatLoadTime = joData.getJSONObject("run").getJSONObject("repeatView").getJSONArray("step")
+															.getJSONObject(0)	// Get first element's loadTime
+															.getJSONObject("results").getInt("loadTime");
+								}
+							} else if( joData.has("average") ){
 								org.json.JSONObject joAverage = joData.getJSONObject("average");
-								double repeatLoadTime = 0, firstLoadTime = 0;
 								if(joAverage.has("firstView") && joAverage.get("firstView") instanceof org.json.JSONObject){
 									org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
+									
 									firstLoadTime = joFirstView.getInt("loadTime");
 								} 
 								if(joAverage.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
@@ -154,26 +168,26 @@ public class TransactionResult extends HttpServlet {
 							sumManager.insertResultJson(joData, harId);
 						}
 					}
-				/*}*/
-				LogManager.infoLog("Before export.php for TestId: "+test_id);
-				String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+wpt_test_code;
-				String saveDir = Constants.HAR_PATH+test_id;
-				HttpDownloadUtility.downloadFile(fileURL, saveDir);
-				
-				try {
-					File file = new File(saveDir);
-					for(int i=0;i<file.listFiles().length;i++){
-						File f = file.listFiles()[i];
-						sumManager.updateHarFileNameInTable(test_id, wpt_test_code, f.getName());
-						JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+test_id);
-						if(jo.getBoolean("success")){
-							deleteHar(saveDir+"/"+f.getName());
+					
+					LogManager.infoLog("Before export.php for TestId: "+test_id);
+					String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+wpt_test_code;
+					String saveDir = Constants.HAR_PATH+test_id;
+					HttpDownloadUtility.downloadFile(fileURL, saveDir);
+					
+					try {
+						File file = new File(saveDir);
+						for(int i=0;i<file.listFiles().length;i++){
+							File f = file.listFiles()[i];
+							sumManager.updateHarFileNameInTable(test_id, wpt_test_code, f.getName());
+							JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+test_id);
+							if(jo.getBoolean("success")){
+								deleteHar(saveDir+"/"+f.getName());
+							}
 						}
+					} catch (Throwable e) {
+						LogManager.errorLog(e);
 					}
-				} catch (Throwable e) {
-					LogManager.errorLog(e);
 				}
-			}
 				
 	
 				if (statusCode != HttpStatus.SC_OK) {
