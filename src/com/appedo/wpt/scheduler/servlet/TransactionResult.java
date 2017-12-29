@@ -130,6 +130,10 @@ public class TransactionResult extends HttpServlet {
 															.getJSONObject(0)	// Get first element's loadTime
 															.getJSONObject("results").getInt("loadTime");
 								}
+								
+								// Update table entry
+								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
+								
 							} else if( joData.has("average") ){
 								org.json.JSONObject joAverage = joData.getJSONObject("average");
 								if(joAverage.has("firstView") && joAverage.get("firstView") instanceof org.json.JSONObject){
@@ -144,6 +148,8 @@ public class TransactionResult extends HttpServlet {
 								if( joAverage.get("firstView").equals("") ){
 									isDowntime = true;
 								}
+								
+								// Update table entry
 								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 								
 								// SLA
@@ -164,6 +170,7 @@ public class TransactionResult extends HttpServlet {
 									statusCode = client.executeMethod(method);
 								}
 							}
+							
 							// Insert Json into db
 							sumManager.insertResultJson(joData, harId);
 						}
@@ -292,7 +299,50 @@ public class TransactionResult extends HttpServlet {
 		return joDeleteResponse;
 	}
 
+	public static void main(String[] args) {
+		HttpClient client = null;
+		PostMethod method = null;
+		int statusCode = -1;
+		String responseStream = "";
+		JSONObject joResponse = null;
+		boolean isDowntime = false;
+		double repeatLoadTime = 0, firstLoadTime = 0;
 		
+		try {
+			client = new HttpClient();
+			method = new PostMethod("https://test-wpt.appedo.com/xmlResult/171228_BX_2T/");
+			// method.addParameter("test", wpt_test_code);
+			method.setRequestHeader("Connection", "close");
+			statusCode = client.executeMethod(method);
+			responseStream = method.getResponseBodyAsString();
+			
+			org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
+			if (xmlJSONObj.has("response")) {
+				org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
+				if( jores.has("data") ) {
+					org.json.JSONObject joData = jores.getJSONObject("data");
+					
+					if( joData.has("run") && joData.getJSONObject("run").has("firstView") && joData.getJSONObject("run").getJSONObject("firstView").has("step") ) {
+						
+						System.out.println(joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step")
+												.getJSONObject(0)	// Get first element's loadTime
+												.getJSONObject("results"));
+						firstLoadTime = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step")
+												.getJSONObject(0)	// Get first element's loadTime
+												.getJSONObject("results").getInt("loadTime");
+						
+						if( joData.has("run") && joData.getJSONObject("run").has("repeatView") && joData.getJSONObject("run").getJSONObject("repeatView").has("step") ) {
+							
+							repeatLoadTime = joData.getJSONObject("run").getJSONObject("repeatView").getJSONArray("step")
+													.getJSONObject(0)	// Get first element's loadTime
+													.getJSONObject("results").getInt("loadTime");
+						}
 		
-
+					}
+				}
+			}
+		}catch(Throwable t) {
+			 t.printStackTrace();
+		}
+	}
 }
