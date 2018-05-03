@@ -6,11 +6,11 @@ import java.util.HashMap;
 
 import net.sf.json.JSONObject;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.sum.RunTest;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;

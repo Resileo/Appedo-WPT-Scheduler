@@ -13,9 +13,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.timer.ResetMeasurementTimerTask;
 import com.appedo.wpt.scheduler.timer.SUMSchedulerTimerTask;
 import com.appedo.wpt.scheduler.timer.ScheduledLocationTracker;
@@ -58,17 +58,23 @@ public class InitServlet extends HttpServlet {
 			// Loads Constant properties 
 			Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
 			
+			// Loads db config
+			DataBaseManager.doConnectionSetupIfRequired("Appedo-Collector", Constants.APPEDO_CONFIG_FILE_PATH, true);
+			
+			con = DataBaseManager.giveConnection();
+			
+			// loads Appedo constants: WhiteLabels, Config-Properties
+			Constants.loadAppedoConstants(con);
+			
+			// Loads Appedo config properties from DB (or) the system path
 			Constants.loadAppedoConfigProperties(Constants.APPEDO_CONFIG_FILE_PATH);
 			
-			// Loads db config
-			DataBaseManager.doConnectionSetupIfRequired(Constants.APPEDO_CONFIG_FILE_PATH);
 			
 //			timerTaskNodeInactive = new NodeTimerTask();
 //			timerNodeInactive.schedule(timerTaskNodeInactive, 500, Constants.TIMER_PERIOD * 1000);
-        	
+			
 			timerTaskNodeactive = new ScheduledLocationTracker();
 			timerNodeActive.schedule(timerTaskNodeactive, 300, 1000 * 60 * 3);
-        	
 			
 			timerTaskSUMScheduler = new SUMSchedulerTimerTask();
 			timerSUMScheduler.schedule(timerTaskSUMScheduler, 150, Constants.SCHEDULE_INTERVAL);

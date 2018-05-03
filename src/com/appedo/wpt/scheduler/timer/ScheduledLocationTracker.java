@@ -1,4 +1,5 @@
 package com.appedo.wpt.scheduler.timer;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -10,9 +11,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.util.HttpURLConnection;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 
 import net.sf.json.JSONArray;

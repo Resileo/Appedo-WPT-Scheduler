@@ -18,12 +18,12 @@ import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 

@@ -9,9 +9,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.manager.SUMManager;
 

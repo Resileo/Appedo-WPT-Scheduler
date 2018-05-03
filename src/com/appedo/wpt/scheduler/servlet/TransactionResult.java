@@ -22,9 +22,9 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.XML;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.manager.SUMManager;
 import com.appedo.wpt.scheduler.sum.HttpDownloadUtility;
 

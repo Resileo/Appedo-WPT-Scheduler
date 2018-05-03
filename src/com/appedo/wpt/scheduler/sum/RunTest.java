@@ -203,21 +203,21 @@ public class RunTest extends Thread {
 									org.json.JSONObject joData = jores.getJSONObject("data");
 
 									if(joData.has("run")){
-										org.json.JSONObject jorun =  joData.getJSONObject("run");
+										org.json.JSONObject jorun = joData.getJSONObject("run");
 										if(jorun.has("firstView")){
-											org.json.JSONObject joFView =  jorun.getJSONObject("firstView");
+											org.json.JSONObject joFView = jorun.getJSONObject("firstView");
 											
 											if( joFView.has("status") && joFView.getString("status").length() > 0){
-												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+"  - "+joFView.getString("status"));
+												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" - "+joFView.getString("status"));
 												isDowntime=true;
 											}
 										}
 									}
 									if( joData.has("average") ){
-										org.json.JSONObject joAverage =  joData.getJSONObject("average");
+										org.json.JSONObject joAverage = joData.getJSONObject("average");
 										double repeatLoadTime = 0, firstLoadTime = 0;
 										if(joAverage.get("firstView") instanceof org.json.JSONObject){
-											org.json.JSONObject joFirstView =  joAverage.getJSONObject("firstView");
+											org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
 											if( joFirstView.has("loadTime") ){
 												firstLoadTime = joFirstView.getInt("loadTime");
 											}
@@ -298,7 +298,7 @@ public class RunTest extends Thread {
 									}
 								}
 							} catch (Throwable th) {
-								LogManager.errorLog(e);
+								LogManager.errorLog(th);
 							}
 						//}
 					}
