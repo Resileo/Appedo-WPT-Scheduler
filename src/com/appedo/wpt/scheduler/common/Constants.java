@@ -2,6 +2,7 @@ package com.appedo.wpt.scheduler.common;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.util.Properties;
 
 import com.appedo.manager.AppedoConstants;
@@ -42,7 +43,7 @@ public class Constants {
 	 * 
 	 * @param srtConstantsPath
 	 */
-	public static void loadConstantsProperties(String srtConstantsPath) throws Exception {
+	public static void loadConstantsProperties(String srtConstantsPath) throws Throwable {
 		Properties prop = new Properties();
 		InputStream is = null;
 		
@@ -82,7 +83,7 @@ public class Constants {
 	}
 
 
-	public static void loadAppedoConfigProperties(String strAppedoConfigPath) throws Exception {
+	public static void loadAppedoConfigProperties(String strAppedoConfigPath) throws Throwable {
 		Properties prop = new Properties();
 		InputStream is = null;
 		
@@ -117,12 +118,12 @@ public class Constants {
 	 * @param strAppedoConfigPath
 	 * @throws Exception
 	 */
-	public static void loadAppedoConstants(String strAppedoConfigPath) throws Exception {
+	public static void loadAppedoConstants(Connection con) throws Throwable {
 		
 		try {
-			AppedoConstants.getAppedoConstants().loadAppedoConstants(strAppedoConfigPath);
-		} catch (Exception e) {
-			throw e;
+			AppedoConstants.getAppedoConstants().loadAppedoConstants(con);
+		} catch (Throwable th) {
+			throw th;
 		}
 	}
 	
@@ -134,7 +135,7 @@ public class Constants {
 	 * @param prop
 	 * @return
 	 */
-	private static String getProperty(String strPropertyName, Properties prop) {
+	private static String getProperty(String strPropertyName, Properties prop) throws Throwable {
 		if( DEV_ENVIRONMENT && prop.getProperty(strPropertyName) != null )
 			return prop.getProperty(strPropertyName);
 		else
