@@ -17,6 +17,10 @@
 		<servlet-class>com.appedo.wpt.scheduler.servlet.InitServlet</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
+	<servlet-mapping>
+		<servlet-name>InitServlet</servlet-name>
+		<url-pattern>/init/reloadConfigProperties</url-pattern>
+	</servlet-mapping>
 	
 	<context-param>
 		<description>Constant file properties</description>

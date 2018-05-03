@@ -118,20 +118,60 @@ public class InitServlet extends HttpServlet {
 		calendar.set(Calendar.SECOND, 0);
 		LogManager.infoLog("TIME::: "+calendar.getTime());
 		return calendar.getTime();
-      }
-	
+    }
+
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
+		doAction(request, response);
 	}
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
+		doAction(request, response);
 	}
-
+	
+	/**
+	 * Accessed in both GET and POSTrequests for the operations below, 
+	 * 1. Loads agents latest build version
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws ServletException
+	 * @throws IOException
+	 */
+	public void doAction(HttpServletRequest request, HttpServletResponse response) throws ServletException,IOException {
+		Connection con = null;
+		
+		response.setContentType("text/html");
+		String strActionCommand = request.getRequestURI();
+		
+		if(strActionCommand.endsWith("/init/reloadConfigProperties")) {
+			// to reload config and appedo_config properties 
+			
+			try {
+				// Loads Constant properties
+				Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
+				
+				con = DataBaseManager.giveConnection();
+				
+				// loads Appedo constants; say loads appedoWhiteLabels, 
+				Constants.loadAppedoConstants(con);
+				
+				// Loads Appedo config properties from the system path
+				Constants.loadAppedoConfigProperties(Constants.APPEDO_CONFIG_FILE_PATH);
+				
+				response.getWriter().write("Loaded <B>Appedo-WPT-Scheduler</B>, config, appedo_config & appedo whitelabels.");
+			} catch (Throwable th) {
+				LogManager.errorLog(th);
+				response.getWriter().write("<B style=\"color: red; \">Exception occurred Appedo-WPT-Scheduler: "+th.getMessage()+"</B>");
+			} finally {
+				DataBaseManager.close(con);
+				con = null;
+			}
+		}
+	}
 }
