@@ -22,7 +22,7 @@ public class HttpDownloadUtility {
      * @param saveDir path of the directory to save the file
      * @throws IOException
      */
-	public static void downloadFile(String fileURL, String saveDir) throws IOException {
+	public static void downloadFile(String fileURL, String saveDir) throws Throwable {
 		long startTime = System.currentTimeMillis();
 		URL url = new URL(fileURL);
 		HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -32,8 +32,6 @@ public class HttpDownloadUtility {
 		if (responseCode == HttpURLConnection.HTTP_OK) {
 			String fileName = "";
 			String disposition = httpConn.getHeaderField("Content-Disposition");
-			String contentType = httpConn.getContentType();
-			int contentLength = httpConn.getContentLength();
 			
 			if (disposition != null) {
 				// Extracts file name from header field

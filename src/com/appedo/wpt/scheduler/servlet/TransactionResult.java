@@ -85,16 +85,22 @@ public class TransactionResult extends HttpServlet {
 					
 					// responseStream = "{\"statusCode\":200,\"statusText\":\"Test Complete\",\"data\":{\"statusCode\":200,\"statusText\":\"Test Complete\",\"id\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"testInfo\":{\"url\":\"http://apm.appedo.com\",\"runs\":1,\"fvonly\":0,\"web10\":0,\"ignoreSSL\":0,\"video\":\"0\",\"label\":\"TEST\",\"priority\":5,\"block\":\"null\",\"location\":\"Dulles\",\"browser\":\"Chrome\",\"connectivity\":\"Cable\",\"bwIn\":5000,\"bwOut\":1000,\"latency\":28,\"plr\":\"0\",\"tcpdump\":0,\"timeline\":0,\"trace\":0,\"bodies\":0,\"netlog\":0,\"standards\":0,\"noscript\":0,\"pngss\":0,\"iq\":50,\"keepua\":0,\"mobile\":0,\"tsview_id\":\"null\",\"scripted\":0},\"testId\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"runs\":1,\"fvonly\":0,\"remote\":false,\"testsExpected\":1,\"location\":\"Dulles\",\"startTime\":\"08/13/15 8:36:57\",\"elapsed\":32,\"completeTime\":\"08/13/15 8:37:29\",\"testsCompleted\":1,\"fvRunsCompleted\":1,\"rvRunsCompleted\":1}}";
 					responseStream = method.getResponseBodyAsString();
+					
 					if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
 						joResponse = JSONObject.fromObject(responseStream);
 						statusCheckStatus = joResponse.getInt("statusCode");
+						
 						//sumManager.updateHarTable(test_id, statusCode,statusText, wpt_test_code, 0, 0);
 						sumManager.updateHarTable(test_id, joResponse.getInt("statusCode"), joResponse.getString("statusText"),wpt_test_code, 0, 0);
 					}
 					
+					// Log the exceptions
 					if( statusCheckStatus != 200 ) {
-						// If status code is not `200` , make sleep it for 10 secs
-						LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+test_id+" <> runTestCode: "+wpt_test_code+" <> "+statusCheckStatus);
+						// Avoid printing 100 & 101 for first few iterations, as the test could be in WIP in WPT side.
+						if ( cnt > 20 || ! ( statusCheckStatus == 100 || statusCheckStatus == 101 ) ) {
+							// If status code is not `200` , make sleep it for 10 secs
+							LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+test_id+" <> runTestCode: "+wpt_test_code+" <> "+statusCheckStatus);
+						}
 						Thread.sleep(10*1000);
 					}
 					
@@ -258,29 +264,25 @@ public class TransactionResult extends HttpServlet {
 	       int responseCode = httpConn.getResponseCode();
 	       
 	       if (responseCode == HttpURLConnection.HTTP_OK) {
-	       	// reads server's response
-	       	reader = new BufferedReader(new InputStreamReader(
-		                    httpConn.getInputStream()));
-	       	String response = reader.readLine();
-	       	LogManager.infoLog("Server's response: " + response);
-		            
+		       	// reads server's response
+		       	reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
+		       	String response = reader.readLine();
+		       	LogManager.infoLog("Server's response: " + response);
 		    } else {
 		    	LogManager.infoLog("Server returned non-OK code: " + responseCode);
-		            joResponse.put("success", false);
+		        joResponse.put("success", false);
 		    }
-		 }catch(Throwable t) {
-			 LogManager.errorLog("Exception in ExportHarFile() :"+t.getMessage());
-			 t.printStackTrace();
-			 joResponse.put("success", true);
-			 throw t;
-			 
-		 }finally {
+		} catch(Throwable t) {
+			joResponse.put("success", true);
+			throw t;
+		} finally {
 			 LogManager.infoLog("Time Taken to export har file to server: "+(System.currentTimeMillis() - startTime)+" TestId: "+strTestId);
 			 outputStream.close();
 			 inputStream.close();
 			 reader.close();
-		 }
-		 return joResponse;
+		}
+		
+		return joResponse;
 	}
 	
 	public JSONObject deleteHar(String strHarPath) throws Throwable {

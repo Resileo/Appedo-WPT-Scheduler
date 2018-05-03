@@ -91,7 +91,7 @@ public class SUMManager {
 			sumdbi = new SUMDBI();
 			jsonObject = sumdbi.getUserDetails(con, testBean.getUserId());
 
-			LogManager.infoLog("Json:: "+jsonObject.toString());
+//			LogManager.infoLog("Json:: "+jsonObject.toString());
 			if( !jsonObject.containsKey("start_date") ){
 				sumdbi.deactivateTest(con, testBean.getUserId());
 				status = true;
