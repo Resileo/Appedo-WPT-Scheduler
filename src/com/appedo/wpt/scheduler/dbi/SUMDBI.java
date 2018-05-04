@@ -18,12 +18,12 @@ import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
@@ -298,6 +298,7 @@ public class SUMDBI {
 	public void insertHarFileTableForURL(JSONObject joHarFileSummary, long lTestId, String strNode) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String strQryInsHarFile = null;
+		
 		try {
 			strQryInsHarFile = "INSERT INTO sum_har_test_results (test_id, mac_address, harfilename, starttimestamp, contentloadtime, pageloadtime,received_on) VALUES"
 					+ "("
@@ -646,6 +647,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		long harId = 0;
 		Date dateLog = LogManager.logMethodStart();
+		
 		try {
 			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location, location_name, browser_name, connection_name ) VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);

@@ -154,15 +154,21 @@ public class RunTest extends Thread {
 						
 						// responseStream = "{\"statusCode\":200,\"statusText\":\"Test Complete\",\"data\":{\"statusCode\":200,\"statusText\":\"Test Complete\",\"id\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"testInfo\":{\"url\":\"http://apm.appedo.com\",\"runs\":1,\"fvonly\":0,\"web10\":0,\"ignoreSSL\":0,\"video\":\"0\",\"label\":\"TEST\",\"priority\":5,\"block\":\"null\",\"location\":\"Dulles\",\"browser\":\"Chrome\",\"connectivity\":\"Cable\",\"bwIn\":5000,\"bwOut\":1000,\"latency\":28,\"plr\":\"0\",\"tcpdump\":0,\"timeline\":0,\"trace\":0,\"bodies\":0,\"netlog\":0,\"standards\":0,\"noscript\":0,\"pngss\":0,\"iq\":50,\"keepua\":0,\"mobile\":0,\"tsview_id\":\"null\",\"scripted\":0},\"testId\":\"150813_FE_e5fd27139876bc8ed69ed3628ced3280\",\"runs\":1,\"fvonly\":0,\"remote\":false,\"testsExpected\":1,\"location\":\"Dulles\",\"startTime\":\"08/13/15 8:36:57\",\"elapsed\":32,\"completeTime\":\"08/13/15 8:37:29\",\"testsCompleted\":1,\"fvRunsCompleted\":1,\"rvRunsCompleted\":1}}";
 						responseStream = method.getResponseBodyAsString().trim();
+						
 						if( ! responseStream.startsWith("{") || ! responseStream.endsWith("}") ) {
 							LogManager.errorLog("Response from testStatus.php is not JSON for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> response: "+responseStream);
 						} else {
 							joResponse = JSONObject.fromObject(responseStream);
 							statusCheckStatus = joResponse.getInt("statusCode");
 							
+							// Log the exceptions
 							if( statusCheckStatus != 200 ) {
-								// If status code is not `200` , make sleep it for 10 secs
-								LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> "+statusCheckStatus);
+								// Avoid printing 100 & 101 for first few iterations, as the test could be in WIP in WPT side.
+								if ( cnt > 20 || ! ( statusCheckStatus == 100 || statusCheckStatus == 101 ) ) {
+									// If status code is not `200` , make sleep it for 10 secs
+									LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> "+statusCheckStatus);
+								}
+								
 								Thread.sleep(10*1000);
 							}
 							
@@ -177,6 +183,7 @@ public class RunTest extends Thread {
 						client = new HttpClient();
 						// URLEncoder.encode(requestUrl,"UTF-8");
 						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+						
 						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+runTestCode+"/");
 						// method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
@@ -196,26 +203,30 @@ public class RunTest extends Thread {
 									org.json.JSONObject joData = jores.getJSONObject("data");
 
 									if(joData.has("run")){
-										org.json.JSONObject jorun =  joData.getJSONObject("run");
+										org.json.JSONObject jorun = joData.getJSONObject("run");
 										if(jorun.has("firstView")){
-											org.json.JSONObject joFView =  jorun.getJSONObject("firstView");
+											org.json.JSONObject joFView = jorun.getJSONObject("firstView");
 											
 											if( joFView.has("status") && joFView.getString("status").length() > 0){
-												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+"  - "+joFView.getString("status"));
+												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" - "+joFView.getString("status"));
 												isDowntime=true;
 											}
 										}
 									}
 									if( joData.has("average") ){
-										org.json.JSONObject joAverage =  joData.getJSONObject("average");
+										org.json.JSONObject joAverage = joData.getJSONObject("average");
 										double repeatLoadTime = 0, firstLoadTime = 0;
 										if(joAverage.get("firstView") instanceof org.json.JSONObject){
-											org.json.JSONObject joFirstView =  joAverage.getJSONObject("firstView");
-											firstLoadTime = joFirstView.getInt("loadTime");
+											org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
+											if( joFirstView.has("loadTime") ){
+												firstLoadTime = joFirstView.getInt("loadTime");
+											}
 										} 
 										if(joAverage.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
 											org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
-											repeatLoadTime = joRepeatView.getInt("loadTime");
+											if( joRepeatView.has("loadTime") ){
+												repeatLoadTime = joRepeatView.getInt("loadTime");
+											}
 										} 
 										sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 										
@@ -234,9 +245,12 @@ public class RunTest extends Thread {
 										joSLA.put("min_breach_count", testBean.getMinBreachCount());
 										joSLA.put("location", strLocation.split(":")[0]);
 										joSLA.put("is_Down", isDowntime);
-										if( testBean.getThresholdValue()> 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ){
+										
+										if( testBean.getThresholdValue() > 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ) {
 											joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue()*1000)?"CRITICAL":"WARNING");
+											
 											LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
+											
 											client = new HttpClient();
 											// URLEncoder.encode(requestUrl,"UTF-8");
 											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
@@ -245,10 +259,11 @@ public class RunTest extends Thread {
 //											method.setRequestHeader("Connection", "close");
 											statusCode = client.executeMethod(method);
 										}
+										
 /*										if( isDowntime && testBean.isDownTimeAlert()){
 											joSLA.put("type", "Configured Site is Down");
 											joSLA.put("is_Down", isDowntime);
-											LogManager.infoLog("json sla for SUM Alert at Downtime:: "+joSLA.toString());
+											System.out.println("json sla for SUM Alert at Downtime:: "+joSLA.toString());
 											client = new HttpClient();
 											// URLEncoder.encode(requestUrl,"UTF-8");
 											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
@@ -258,44 +273,46 @@ public class RunTest extends Thread {
 											statusCode = client.executeMethod(method);
 										} */
 									}
+									
 									// Insert Json into db
 									sumManager.insertResultJson(joData, harId);
 								}
 							}
-						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
-						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
-						String saveDir = Constants.HAR_PATH+testBean.getTestId();
-						// Downloads har from wpt server and keep it in wpt_scheduler instance
-						HttpDownloadUtility.downloadFile(fileURL, saveDir);
-						
-						try {
-							File file = new File(saveDir);
-							for(int i=0;i<file.listFiles().length;i++){
-								File f = file.listFiles()[i];
-								sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
-								// Exports har files to the har repository
-								JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
-								if(jo.getBoolean("success")){
-									deleteHar(saveDir+"/"+f.getName());
+							
+							LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+							String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
+							String saveDir = Constants.HAR_PATH+testBean.getTestId();
+							// Downloads HAR from WPT server and keep it in wpt_scheduler instance
+							HttpDownloadUtility.downloadFile(fileURL, saveDir);
+							
+							try {
+								File file = new File(saveDir);
+								
+								for(int i=0;i<file.listFiles().length;i++){
+									File f = file.listFiles()[i];
+									sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
+									// Exports HAR files to the HAR repository
+									JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
+									if(jo.getBoolean("success")){
+										deleteHar(saveDir+"/"+f.getName());
+									}
 								}
+							} catch (Throwable th) {
+								LogManager.errorLog(th);
 							}
-						} catch (Throwable e) {
-							LogManager.errorLog(e);
-						}
+						//}
 					}
-
 				}
-				
 			}
 			
 			if (statusCode != HttpStatus.SC_OK) {
-				LogManager.infoLog("Method failed: " + method.getStatusLine());
+				LogManager.errorLog("Method failed: " + method.getStatusLine());
 			}
 			
-		} catch (Exception ee) {
-			LogManager.errorLog(ee);
+		} catch (Throwable th) {
+			LogManager.errorLog(th);
 		} finally {
-			LogManager.infoLog("Test Status: "+testBean.isStatus()+" TestId: "+testBean.getTestId()+" Thread Id: "+Thread.currentThread().getId());
+			System.out.println("Test Status: "+testBean.isStatus()+" TestId: "+testBean.getTestId()+" Thread Id: "+Thread.currentThread().getId());
 		}
 	}
 	
@@ -328,7 +345,7 @@ public class RunTest extends Thread {
 			// takes file path from input parameter
 			File uploadFile = new File(filePath);
 
-			String UPLOAD_URL = Constants.EXPORT_URL;
+			String UPLOAD_URL = Constants.EXPORT_URL; //https://apm.appedo.com/AppedoEUM/importhar
 			// creates a HTTP connection
 			URL url = new URL(UPLOAD_URL);
 			HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -360,18 +377,13 @@ public class RunTest extends Thread {
 				// reads server's response
 				reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
 				String response = reader.readLine();
-				LogManager.infoLog("Server's response: " + response);
-
 			} else {
-				LogManager.infoLog("Server returned non-OK code: " + responseCode);
+				LogManager.errorLog("Server returned non-OK code: " + responseCode);
 				joResponse.put("success", false);
 			}
 		} catch (Throwable t) {
-			LogManager.infoLog("Exception in ExportHarFile() :" + t.getMessage());
-			t.printStackTrace();
 			joResponse.put("success", true);
 			throw t;
-
 		} finally {
 			LogManager.infoLog("Time Taken to export har file to server: " + (System.currentTimeMillis() - startTime) + " TestId: " + strTestId);
 			outputStream.close();
@@ -396,7 +408,6 @@ public class RunTest extends Thread {
 			file.delete();
 			LogManager.infoLog("Time taken to deleteHar: " + (System.currentTimeMillis() - startTime));
 		} catch (Throwable t) {
-			System.out.println("Exception in deleteHar" + t.getMessage());
 			joDeleteResponse.put("success", false);
 			throw t;
 		}

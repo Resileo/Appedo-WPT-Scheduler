@@ -1,11 +1,10 @@
 package com.appedo.wpt.scheduler.timer;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.TimerTask;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.manager.NodeManager;
 
 public class NodeTimerTask extends TimerTask {
@@ -19,17 +18,12 @@ public class NodeTimerTask extends TimerTask {
 	public void run() {
 		try{
 			// System.out.println("Starting timer to update in active nodes: "+(new Date()));
+
+			con = DataBaseManager.reEstablishConnection(con);
+			
 			new NodeManager().updateInActiveNodes(con);
 		} catch(Throwable e) {
 			LogManager.errorLog(e);
-			
-			try {
-				if( ! DataBaseManager.isConnectionExists(con) ){
-					con = DataBaseManager.reEstablishConnection(con);
-				}
-			} catch (SQLException e1) {
-				LogManager.errorLog(e);
-			}
 		}
 	}
 	

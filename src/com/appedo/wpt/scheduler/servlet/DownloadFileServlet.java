@@ -70,6 +70,7 @@ public class DownloadFileServlet extends HttpServlet {
 			//String strLocation = (request.getParameter("country")+"-"+request.getParameter("state")+"-"+request.getParameter("city")).toUpperCase();
 			String strLocation = (request.getParameter("country")+"-"+"-"+request.getParameter("city"))+":CHROME.Native";
 			String mac = request.getParameter("mac");
+			
 			//String userId = CryptManager.decodeDecryptURL(request.getParameter("uid"));
 			Object[] oaReturn = (new SUMManager()).getSUMTestForLocation(strLocation, mac);
 			SUMTestBean sumTestBean = (SUMTestBean)oaReturn[0];

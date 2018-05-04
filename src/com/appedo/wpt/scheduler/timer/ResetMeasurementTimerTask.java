@@ -3,8 +3,8 @@ package com.appedo.wpt.scheduler.timer;
 import java.sql.Connection;
 import java.util.TimerTask;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 
 public class ResetMeasurementTimerTask extends TimerTask{
