@@ -139,7 +139,6 @@ public class Constants {
 		if( DEV_ENVIRONMENT && prop.getProperty(strPropertyName) != null )
 			return prop.getProperty(strPropertyName);
 		else
-			return AppedoConstants.getAppedoConfigProperty("SLA_SETTING_MAX_TRY_COUNT");
-
+			return AppedoConstants.getAppedoConfigProperty(strPropertyName);
 	}
 }
