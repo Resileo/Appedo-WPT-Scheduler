@@ -30,14 +30,16 @@ public class ScheduledLocationTracker extends TimerTask {
 	public void run() {
 		HttpClient client = null;
 		PostMethod method = null;
+		
 		JSONObject joResponse = null;
 		JSONObject joNodeAlert = null;
 		JSONArray jaInactiveNodes = null;
+		
 		SUMDBI sumdbi = null;
 		Set<String> existingAgentsFromDb = null, activeAgentsFromDb = null, allActiveAgentsInApi = null, activeDesktopAgents = null, 
 				activeMobileAgents = null, desktopAgentsToInsert = null, mobileAgentsToInsert = null;
 		
-		String strLocationName = null;
+		String strLocationName = null, strDeviceType = null;
 		StringBuilder activeNodesStrbuildr = null;
 		
 		try {
@@ -76,9 +78,11 @@ public class ScheduledLocationTracker extends TimerTask {
 						strLocationName = (String) key;
 						JSONObject joLocationDetails = joLocationResponse.getJSONObject( strLocationName );
 						
-						if ( joLocationDetails.getString("device_type"/*("group")*/).toLowerCase().equals("DESKTOP") ) {
+						strDeviceType = joLocationDetails.containsKey("device_type") ? joLocationDetails.getString("device_type") : joLocationDetails.getString("group");
+						
+						if ( strDeviceType.toUpperCase().equals("DESKTOP") ) {
 							activeDesktopAgents.add( strLocationName );
-						} else if ( joLocationDetails.getString("device_type"/*("group")*/).toLowerCase().equals("MOBILE") ) {
+						} else if ( strDeviceType.toUpperCase().equals("MOBILE") ) {
 							activeMobileAgents.add( strLocationName );
 						}
 						
