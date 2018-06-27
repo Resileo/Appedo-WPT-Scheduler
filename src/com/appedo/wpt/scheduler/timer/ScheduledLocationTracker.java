@@ -1,23 +1,23 @@
 package com.appedo.wpt.scheduler.timer;
+
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.util.HttpURLConnection;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.common.Constants;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 public class ScheduledLocationTracker extends TimerTask {
 
@@ -30,13 +30,18 @@ public class ScheduledLocationTracker extends TimerTask {
 	public void run() {
 		HttpClient client = null;
 		PostMethod method = null;
+		
 		JSONObject joResponse = null;
 		JSONObject joNodeAlert = null;
-		JSONArray jaInActivenodes = null;
+		JSONArray jaInactiveNodes = null;
+		
 		SUMDBI sumdbi = null;
 		Set<String> existingAgentsFromDb = null, activeAgentsFromDb = null, allActiveAgentsInApi = null, activeDesktopAgents = null, 
 				activeMobileAgents = null, desktopAgentsToInsert = null, mobileAgentsToInsert = null;
-
+		
+		String strLocationName = null, strDeviceType = null;
+		StringBuilder activeNodesStrbuildr = null;
+		
 		try {
 			con = DataBaseManager.reEstablishConnection(con);
 			
@@ -45,15 +50,15 @@ public class ScheduledLocationTracker extends TimerTask {
 			activeMobileAgents = new HashSet<String>();
 			desktopAgentsToInsert = new HashSet<String>();
 			mobileAgentsToInsert = new HashSet<String>();
-
+			
 			sumdbi = new SUMDBI();
 			joNodeAlert = new JSONObject();
-			jaInActivenodes = new JSONArray();
+			jaInactiveNodes = new JSONArray();
+			
 			existingAgentsFromDb = sumdbi.extractExistingAgents(con);
 			activeAgentsFromDb = sumdbi.extractActiveAgents(con);
-			StringBuilder activeNodesStrbuildr = null;
+			
 			client = new HttpClient();
-
 			//method = new PostMethod("https://wpt.appedo.com/getLocations.php");
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"getLocations.php");
 			method.addParameter("f", "json");
@@ -61,90 +66,109 @@ public class ScheduledLocationTracker extends TimerTask {
 			int statusCode = client.executeMethod(method);
 			//System.out.println(statusCode);
 			String responseStream = method.getResponseBodyAsString();
-
+			
 			if (statusCode == HttpURLConnection.HTTP_OK && responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
 				activeNodesStrbuildr = new StringBuilder();
 				joResponse = JSONObject.fromObject(responseStream);
-				if (!joResponse.getString("data").equals("[]")) {
-					JSONObject locationresp = (JSONObject) joResponse.get("data");
-					for (Object key : locationresp.keySet()) {
-						String keyStr = (String) key;
-						if (keyStr.split(":").length == 2) {
-							activeDesktopAgents.add(keyStr.split(":")[0]);
-						} else if (keyStr.split(":").length == 1) {
-							activeMobileAgents.add(keyStr.split(":")[0]);
+				
+				JSONObject joLocationResponse = joResponse.getJSONObject("data");
+				if ( joLocationResponse.size() > 0 ) {
+					
+					for (Object key : joLocationResponse.keySet()) {
+						strLocationName = (String) key;
+						JSONObject joLocationDetails = joLocationResponse.getJSONObject( strLocationName );
+						
+						strDeviceType = joLocationDetails.containsKey("device_type") ? joLocationDetails.getString("device_type") : joLocationDetails.getString("group");
+						
+						if ( strDeviceType.toUpperCase().equals("DESKTOP") ) {
+							activeDesktopAgents.add( strLocationName );
+						} else if ( strDeviceType.toUpperCase().equals("MOBILE") ) {
+							activeMobileAgents.add( strLocationName );
 						}
-						allActiveAgentsInApi.add(keyStr.split(":")[0]);
+						
+						allActiveAgentsInApi.add( strLocationName );
 					}
-
-					// To alert admin/devops when active Agents are inActive
+					
+					// To alert Admin/DevOps when active Agents are inActive
 					for (String strAgent : activeAgentsFromDb) {
-						if (!allActiveAgentsInApi.contains(strAgent)) {
-							jaInActivenodes.add(strAgent);
+						if ( !allActiveAgentsInApi.contains(strAgent) ) {
+							jaInactiveNodes.add(strAgent);
 						}
 					}
-					if (jaInActivenodes.size() != 0 && jaInActivenodes != null) {
-						joNodeAlert.put("inactive_nodes", jaInActivenodes.toString());
+					if ( jaInactiveNodes.size() != 0 ) {
+						joNodeAlert.put("inactive_nodes", jaInactiveNodes.toString());
 					}
-
-					Iterator<String> itr= allActiveAgentsInApi.iterator();
-					while(itr.hasNext()){
+					
+					Iterator<String> itr = allActiveAgentsInApi.iterator();
+					while( itr.hasNext() ) {
 						String keyStr = (String) itr.next();
 						activeNodesStrbuildr.append("'").append(keyStr.split(":")[0]).append("',");
 					}
+					
 					activeNodesStrbuildr.deleteCharAt(activeNodesStrbuildr.lastIndexOf(","));
 					String activeNodes = activeNodesStrbuildr.toString();
-						//update inactive locations in DB
-						sumdbi.updateInactiveAgents(activeNodes, con);
-
-						//Desktop
-						for (String activeDeskloc: activeDesktopAgents) {
-							if (!existingAgentsFromDb.contains(activeDeskloc)) {
-								desktopAgentsToInsert.add(activeDeskloc);
-							}
+					
+					//update inactive locations in DB
+					sumdbi.updateInactiveAgents(activeNodes, con);
+					
+					//Desktop
+					for (String activeDeskloc: activeDesktopAgents) {
+						if ( ! existingAgentsFromDb.contains(activeDeskloc) ) {
+							desktopAgentsToInsert.add(activeDeskloc);
 						}
-						//Mobile
-						for (String activeMobiloc: activeMobileAgents) {
-							if (!existingAgentsFromDb.contains(activeMobiloc)) {
-								mobileAgentsToInsert.add(activeMobiloc);
-							}
+					}
+					
+					//Mobile
+					for (String activeMobiloc: activeMobileAgents) {
+						if ( ! existingAgentsFromDb.contains(activeMobiloc) ) {
+							mobileAgentsToInsert.add(activeMobiloc);
 						}
-						// To insert new Desktop/Mobile Agents
-							if (desktopAgentsToInsert.size() > 0) {
-								LogManager.infoLog(" frequent mail triggered in test environment : desktopAgentsToInsert :"+desktopAgentsToInsert);
-								boolean desktopAgentsAdded = false;
-								desktopAgentsAdded = sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
-								if(desktopAgentsAdded){
-									joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were updated in database");
-								}else{
-									joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were not updated in database");
-								}
-								LogManager.infoLog("New Desktop Agents "+ desktopAgentsToInsert.toString());
-							}
-							if (mobileAgentsToInsert.size() > 0) {
-								boolean mobileAgentsAdded = false;
-								mobileAgentsAdded = sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
-								if(mobileAgentsAdded){
-									joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were updated in database");
-								}else{
-									joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were not updated in database");
-								}
-								LogManager.infoLog("New Mobile Agents "+ mobileAgentsToInsert.toString());
-							}
-							//to alert admin/devops when active Agents are New /inactive
-							if(joNodeAlert.size() > 0 && joNodeAlert != null){
-								LogManager.infoLog("json with node names to Alert devops:: "+joNodeAlert.toString());
-								client = new HttpClient();
-								// URLEncoder.encode(requestUrl,"UTF-8");
-								method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-								method.addParameter("command", "inActiveLocations");
-								method.addParameter("inActiveLocations", joNodeAlert.toString());
-								//method.setRequestHeader("Connection", "close");
-								statusCode = client.executeMethod(method);
-								LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
-							}
+					}
+					
+					// To insert new Desktop/Mobile Agents
+					if (desktopAgentsToInsert.size() > 0) {
+						LogManager.infoLog(" frequent mail triggered in test environment : desktopAgentsToInsert :"+desktopAgentsToInsert);
+						boolean desktopAgentsAdded = false;
+						
+						desktopAgentsAdded = sumdbi.insertNewDesktopAgents(con, desktopAgentsToInsert);
+						
+						if(desktopAgentsAdded){
+							joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were updated in database");
+						}else{
+							joNodeAlert.put("new_desktop_agents", desktopAgentsToInsert.toString()+" - were not updated in database");
+						}
+						LogManager.infoLog("New Desktop Agents "+ desktopAgentsToInsert.toString());
+					}
+					if (mobileAgentsToInsert.size() > 0) {
+						boolean mobileAgentsAdded = false;
+						
+						mobileAgentsAdded = sumdbi.insertNewMobileAgents(con, mobileAgentsToInsert);
+						
+						if(mobileAgentsAdded){
+							joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were updated in database");
+						}else{
+							joNodeAlert.put("new_mobile_agents", mobileAgentsToInsert.toString()+" - were not updated in database");
+						}
+						LogManager.infoLog("New Mobile Agents "+ mobileAgentsToInsert.toString());
+					}
+					
+					// Alert Admin/DevOps when active Agents are New /inactive
+					if(joNodeAlert.size() > 0 && joNodeAlert != null){
+						LogManager.infoLog("json with node names to Alert devops:: "+joNodeAlert.toString());
+						
+						client = new HttpClient();
+						// URLEncoder.encode(requestUrl,"UTF-8");
+						method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+						method.addParameter("command", "inActiveLocations");
+						method.addParameter("inActiveLocations", joNodeAlert.toString());
+						//method.setRequestHeader("Connection", "close");
+						statusCode = client.executeMethod(method);
+						
+						LogManager.infoLog("While Sending to sla_Collector :: "+statusCode);	
+					}
 				} else {
 					sumdbi.updateAllAgentsInactive(con);
+					
 					LogManager.infoLog("No locations found in getLocations.php API");
 				}
 			} else {

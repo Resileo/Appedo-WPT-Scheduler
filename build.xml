@@ -1,38 +1,42 @@
 <project name="Appedo_WPT_Scheduler" default="package">
-        <path id="libpath">
-             <fileset dir="WebRoot/WEB-INF/lib">
-                <include name="**/*.jar"/>
-             </fileset>
-        </path>
-        <target name="init">
-             <property name="src_dir" value="src/com/appedo/wpt/scheduler"/>
-             <property name="resource" value="com/appedo/wpt/scheduler/resource"/>
-             <property name="classes" value="Appedo_temp/classes"/>
-             <property name="wars" value="Appedo_temp/wars"/>
-             <property name="web.xml" value="WebRoot/WEB-INF/web.xml"/>
-        </target>
-        <target name="clean" depends="init">
-            <delete dir="Appedo_temp"/>
-        </target>
-        <target name="prepare" depends="clean">
-             <mkdir dir="${classes}"/>
-             <mkdir dir="${wars}"/>
-        </target>
-        <target name="compile" depends="prepare">
-            <javac destdir="${classes}" srcdir="src" debug="true" includeantruntime="false">
-                 <classpath refid="libpath"/>
-            </javac>
-        </target>
-        <target name="package" depends="compile">
-                <mkdir dir="${classes}/${resource}"/>
-                <copy todir="${classes}/${resource}">
-                        <fileset dir="${src_dir}/resource"/>
-                </copy>
-                <war destfile="${wars}/appedo_wpt_scheduler.war" webxml="${web.xml}">
-                        <fileset dir="WebRoot"/>
-						<classes dir="${classes}"/>
-                </war>
-				<copy file="${wars}/appedo_wpt_scheduler.war" todir="/opt/artifacts"/>
-                
-        </target>
+	<path id="libpath">
+		<fileset dir="WebRoot/WEB-INF/lib">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+	
+	<target name="init">
+		<property name="src_dir" value="src"/>
+		<property name="resource" value="com/appedo/wpt/scheduler/resource"/>
+		<property name="classes" value="Appedo_temp/classes"/>
+		<property name="wars" value="Appedo_temp/wars"/>
+		<property name="web.xml" value="WebRoot/WEB-INF/web.xml"/>
+	</target>
+	
+	<target name="clean" depends="init">
+		<delete dir="Appedo_temp"/>
+	</target>
+	
+	<target name="prepare" depends="clean">
+		<mkdir dir="${classes}"/>
+		<mkdir dir="${wars}"/>
+	</target>
+	
+	<target name="compile" depends="prepare">
+		<javac destdir="${classes}" srcdir="${src_dir}" debug="true" includeantruntime="false">
+			<classpath refid="libpath"/>
+		</javac>
+	</target>
+	
+	<target name="package" depends="compile">
+		<mkdir dir="${classes}/${resource}"/>
+		<copy todir="${classes}/${resource}">
+			<fileset dir="${src_dir}/${resource}"/>
+		</copy>
+		<war destfile="${wars}/appedo_wpt_scheduler.war" webxml="${web.xml}">
+			<fileset dir="WebRoot"/>
+			<classes dir="${classes}"/>
+		</war>
+		<copy file="${wars}/appedo_wpt_scheduler.war" todir="/opt/artifacts"/>
+	</target>
 </project>

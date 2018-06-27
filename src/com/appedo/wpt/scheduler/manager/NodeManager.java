@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
 import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
-import com.appedo.wpt.scheduler.connect.DataBaseManager;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
 
@@ -70,7 +70,6 @@ public class NodeManager {
 	 * where the status not received from the agent 
 	 * @throws Throwable
 	 */
-	
 	public void updateInActiveNodes(Connection con) throws Throwable {
 		ResultSet rst = null;
 		
@@ -80,7 +79,7 @@ public class NodeManager {
 		
 		try {
 	     	sumDBI = new SUMDBI();
-	     	
+			
 	     	sumDBI.updateNodeStatus(con);
 			
 			rst = getNonActiveAgentLocations(con, pstmt);
@@ -93,22 +92,17 @@ public class NodeManager {
 				}
 			}
 			
-		}catch(Throwable t) {
+		} catch(Throwable t) {
 			LogManager.errorLog(t);
 			// throw t;
-
-			// re-establish the connection if it is disconnected.
-			// this will keep on waiting for the Connection to get established.
-			con = DataBaseManager.reEstablishConnection(con);
-		}finally {
+		} finally {
 			DataBaseManager.close(rst);
 			rst = null;
 			DataBaseManager.close(pstmt);
 			pstmt = null;
 		}
-		
-		
 	}
+	
 	/**
 	 * to get the inactive locations 
 	 * @return
