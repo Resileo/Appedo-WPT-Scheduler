@@ -69,7 +69,7 @@ public class TransactionResult extends HttpServlet {
 			
 			//update the details in db.
 			LogManager.infoLog("Transaction update started for test id :"+test_id+" and location :"+location);
-			long harId = sumManager.insertHarTable(test_id, -1,"", wpt_test_code,location+":CHROME.Native");
+			long harId = sumManager.insertHarTable(test_id, -1,"", wpt_test_code,location+":CHROME.Native", "TRANSACTION");
 
 			if( wpt_test_code != null){
 				int statusCheckStatus = 0;

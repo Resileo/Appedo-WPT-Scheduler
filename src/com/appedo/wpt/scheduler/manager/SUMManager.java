@@ -117,14 +117,14 @@ public class SUMManager {
 		return status;
 	}
 
-	public long insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location, String testUrl) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
 		long harId = 0;
 		try {
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
-			harId = sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location);
+			harId = sumdbi.insertHarTable(con, testId, statusCode, statusText, runTestCode, location, testUrl);
 		} catch (Exception e) {
 			LogManager.errorLog(e);
 		} finally {
