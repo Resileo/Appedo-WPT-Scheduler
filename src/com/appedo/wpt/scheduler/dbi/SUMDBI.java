@@ -642,14 +642,14 @@ public class SUMDBI {
 	}
 
 
-	public long insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location) {
+	public long insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location, String testUrl) {
 		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
 		long harId = 0;
 		Date dateLog = LogManager.logMethodStart();
 		
 		try {
-			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location, location_name, browser_name, connection_name ) VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?) ");
+			sbQuery	.append("INSERT INTO sum_har_test_results (test_id, starttimestamp, run_test_code, status_code, status_text, location, location_name, browser_name, connection_name, testurl ) VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?, ?) ");
 			pstmt = con.prepareStatement(sbQuery.toString(), PreparedStatement.RETURN_GENERATED_KEYS);
 			pstmt.setLong(1, testId);
 			pstmt.setString(2, runTestCode);
@@ -659,6 +659,11 @@ public class SUMDBI {
 			pstmt.setString(6, location.split(":")[0]);
 			pstmt.setString(7, location.split(":")[1].split("\\.")[0]);
 			pstmt.setString(8, location.split(":")[1].split("\\.")[1]);
+			if (testUrl == null) {
+				pstmt.setNull(9, Types.VARCHAR);
+			} else {
+				pstmt.setString(9, testUrl);
+			}
 			pstmt.executeUpdate();
 			harId = DataBaseManager.returnKey(pstmt);
 			

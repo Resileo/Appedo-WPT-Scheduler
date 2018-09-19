@@ -136,7 +136,7 @@ public class RunTest extends Thread {
 				}
 				
 				// preparation of sum_har_results table
-				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation());
+				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation(), testBean.getURL());
 				sumManager.updateMeasurementCntInUserMaster(testBean.getTestId());
 				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
 				
