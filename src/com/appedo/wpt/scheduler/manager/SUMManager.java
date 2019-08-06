@@ -151,6 +151,22 @@ public class SUMManager {
 		}
 	}
 	
+	public void updateHarTable(long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime, JSONObject JoTestResValue) {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			sumdbi.updateHarTable(con, testId, statusCode, statusText, runTestCode, loadTime, repeatLoadTime, JoTestResValue);
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally {
+			DataBaseManager.close(con);
+			con = null;
+			sumdbi = null;
+		}
+	}
+	
 	public void updateHarFileNameInTable(long testId, String runTestCode, String harFileName) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
