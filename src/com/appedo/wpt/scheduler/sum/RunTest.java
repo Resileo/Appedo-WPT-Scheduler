@@ -244,19 +244,19 @@ public class RunTest extends Thread {
 															bytesIn = bytesIn + (jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("bytesIn")/1024);
 														}
 													}
+												}else if (joFView.has("results")) {
+													firstLoadTime = joFView.getJSONObject("results").getDouble("loadTime");
+													
+													TTFB = (joFView.getJSONObject("results").getDouble("TTFB")/1000);
+													render = (joFView.getJSONObject("results").getDouble("render")/1000);
+													domElements = joFView.getJSONObject("results").getDouble("domElements");
+													docTime = (joFView.getJSONObject("results").getDouble("docTime")/1000);
+													requestsDoc = joFView.getJSONObject("results").getDouble("requestsDoc");
+													bytesInDoc = (joFView.getJSONObject("results").getDouble("bytesInDoc")/1024);
+													fullyLoaded  = (joFView.getJSONObject("results").getDouble("fullyLoaded")/1000);
+													requests = joFView.getJSONObject("results").getDouble("requests");
+													bytesIn = (joFView.getJSONObject("results").getDouble("bytesIn")/1024);
 												}
-											}else if (joFView.has("results")) {
-												firstLoadTime = joFView.getJSONObject("results").getDouble("loadTime");
-												
-												TTFB = (joFView.getJSONObject("results").getDouble("TTFB")/1000);
-												render = (joFView.getJSONObject("results").getDouble("render")/1000);
-												domElements = joFView.getJSONObject("results").getDouble("domElements");
-												docTime = (joFView.getJSONObject("results").getDouble("docTime")/1000);
-												requestsDoc = joFView.getJSONObject("results").getDouble("requestsDoc");
-												bytesInDoc = (joFView.getJSONObject("results").getDouble("bytesInDoc")/1024);
-												fullyLoaded  = (joFView.getJSONObject("results").getDouble("fullyLoaded")/1000);
-												requests = joFView.getJSONObject("results").getDouble("requests");
-												bytesIn = (joFView.getJSONObject("results").getDouble("bytesIn")/1024);
 											}
 											
 											joResultValue.put("loadTime", firstLoadTime/1000);
@@ -295,19 +295,19 @@ public class RunTest extends Thread {
 															rbytesIn = rbytesIn + (jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("bytesIn")/1024);
 														}
 													}
+												}else if(joRView.has("results")) {
+													repeatLoadTime = joRView.getJSONObject("results").getDouble("loadTime");
+													
+													rTTFB = (joRView.getJSONObject("results").getDouble("TTFB")/1000);
+													rrender = (joRView.getJSONObject("results").getDouble("render")/1000);
+													rdomElements = joRView.getJSONObject("results").getDouble("domElements");
+													rdocTime = (joRView.getJSONObject("results").getDouble("docTime")/1000);
+													rrequestsDoc = joRView.getJSONObject("results").getDouble("requestsDoc");
+													rbytesInDoc = (joRView.getJSONObject("results").getDouble("bytesInDoc")/1024);
+													rfullyLoaded  = (joRView.getJSONObject("results").getDouble("fullyLoaded")/1000);
+													rrequests = joRView.getJSONObject("results").getDouble("requests");
+													rbytesIn = (joRView.getJSONObject("results").getDouble("bytesIn")/1024);
 												}
-											}else if(joRView.has("results")) {
-												repeatLoadTime = joRView.getJSONObject("results").getDouble("loadTime");
-												
-												rTTFB = (joRView.getJSONObject("results").getDouble("TTFB")/1000);
-												rrender = (joRView.getJSONObject("results").getDouble("render")/1000);
-												rdomElements = joRView.getJSONObject("results").getDouble("domElements");
-												rdocTime = (joRView.getJSONObject("results").getDouble("docTime")/1000);
-												rrequestsDoc = joRView.getJSONObject("results").getDouble("requestsDoc");
-												rbytesInDoc = (joRView.getJSONObject("results").getDouble("bytesInDoc")/1024);
-												rfullyLoaded  = (joRView.getJSONObject("results").getDouble("fullyLoaded")/1000);
-												rrequests = joRView.getJSONObject("results").getDouble("requests");
-												rbytesIn = (joRView.getJSONObject("results").getDouble("bytesIn")/1024);
 											}
 											
 											joResultValue.put("rloadTime", repeatLoadTime/1000);
