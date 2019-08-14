@@ -46,7 +46,7 @@ public class SUMDBI {
 		Date dateLog = LogManager.logMethodStart();
 		
 		try{
-			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
+			sbQuery .append("SELECT t.test_id, t.testName, t.testurl, t.script, t.runevery, t.testtransaction, t.status, t.testtype, t.testfilename, ")
 					.append("t.user_id, location, os_name, browser_name, t.connection_id, t.download, t.upload, t.latency, t.packet_loss, ")
 					.append("sc.connection_name, CASE WHEN repeat_view=false THEN 1 ELSE 0 END AS repeatView, sla.sla_id, sla.sla_sum_id, ")
 					.append("sla.sum_type, t.warning, t.error, t.rm_min_breach_count, t.downtime_alert ")
@@ -68,6 +68,7 @@ public class SUMDBI {
 			while (rs.next()) {
 				SUMTestBean testBean = new SUMTestBean();
 				testBean.setTestId(Integer.valueOf(rs.getString("test_id")));
+				testBean.setScript(rs.getString("script"));
 				testBean.setTestName(rs.getString("testName"));
 				testBean.setURL(rs.getString("testurl"));
 				testBean.setRunEveryMinute( rs.getInt("runevery") );
@@ -707,6 +708,40 @@ public class SUMDBI {
 			}
 			pstmt.setLong(5, testId);
 			pstmt.setString(6, runTestCode);
+			
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			LogManager.errorLog(e);
+		} finally{
+			LogManager.logMethodEnd(dateLog);
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}
+	}
+	
+	public void updateHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, int loadTime, int repeatLoadTime, JSONObject joTestResValue) {
+		PreparedStatement pstmt = null;
+		StringBuilder sbQuery = new StringBuilder();
+		Date dateLog = LogManager.logMethodStart();
+		try {
+			sbQuery	.append("UPDATE sum_har_test_results SET status_code = ?, status_text = ?, pageloadtime = ?, pageloadtime_repeatview = ?, test_result = ? WHERE test_id = ? AND run_test_code = ? ");
+			pstmt = con.prepareStatement(sbQuery.toString());
+			pstmt.setInt(1, statusCode);
+			pstmt.setString(2, statusText);
+			if( loadTime == 0 ){
+				pstmt.setNull(3, Types.INTEGER);
+			} else {
+				pstmt.setInt(3, loadTime);
+			}
+			if( repeatLoadTime == 0 ){
+				pstmt.setNull(4, Types.INTEGER);
+			} else {
+				pstmt.setInt(4, repeatLoadTime);
+			}
+			pstmt.setObject(5, UtilsFactory.getPgObject(joTestResValue.toString()));
+			pstmt.setLong(6, testId);
+			pstmt.setString(7, runTestCode);
 			
 			pstmt.executeUpdate();
 		} catch (Exception e) {

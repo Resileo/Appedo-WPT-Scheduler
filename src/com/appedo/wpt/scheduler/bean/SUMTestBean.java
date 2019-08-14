@@ -44,7 +44,8 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	private int errorValue;
 	private int minBreachCount;
 	private boolean downTimeAlert;
-		
+	private String strScript;
+	
 	private Date dateQueuedOn = null;
 	
 	private HashSet<String> hsTargetLocations = null;
@@ -100,6 +101,13 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 	}
 	public void setURL(String strURL) {
 		this.strURL = strURL;
+	}
+	
+	public String getScript() {
+		return strScript;
+	}
+	public void setScript(String strScript) {
+		this.strScript = strScript;
 	}
 	
 	public boolean isStatus() {
@@ -290,6 +298,7 @@ public class SUMTestBean implements Comparable<SUMTestBean>, Cloneable {
 		joBean.put("test_name", strTestName);
 		joBean.put("test_type", strTestType);
 		joBean.put("url", strURL);
+		joBean.put("Script", strScript);
 		joBean.put("transaction", strTransaction);
 		joBean.put("run_every_minute", nRunEveryMinute);
 		joBean.put("status", bStatus);
