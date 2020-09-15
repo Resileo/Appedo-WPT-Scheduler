@@ -50,7 +50,7 @@ public class CryptManager {
 			ecipher = Cipher.getInstance("AES/CBC/PKCS5Padding", new SunJCE());
 			dcipher = Cipher.getInstance("AES/CBC/PKCS5Padding", new SunJCE());
 			
-			byte[] iv = "ssit1234products".getBytes("UTF-8");
+			byte[] iv = "1234567890123456".getBytes("UTF-8");
 			
 			ecipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
 			dcipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
@@ -69,8 +69,8 @@ public class CryptManager {
 	 */
 	private static SecretKey generateKey() throws Exception {
 		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		char[] password = new char[] {'s', 's', '1', 't', '_', '0', 'p', '3', 'n', 'm', '3', 'n', 't', '0', 'r', '_', '_', 'p', '@', 's', 's', 'w', '0', 'r', 'd' };
-		byte[] salt = new byte[] {'s', 's', '1', 't', '_', 'S', '@', '1', 't'};
+		char[] password = new char[] {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5' };
+		byte[] salt = new byte[] {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
 		
 		KeySpec spec = new PBEKeySpec(password, salt, 65536, 128);
 		SecretKey tmp = factory.generateSecret(spec);
