@@ -131,18 +131,21 @@ public class SUMDBI {
 				// manager.runRUMTests(testBean);
 			}
 		} catch (Throwable ex) {
-			LogManager.errorLog(ex);
+			LogManager.errorLog(ex, sbQuery);
 			throw ex;
 		} finally {
 			LogManager.logMethodEnd(dateLog);
+			
 			DataBaseManager.close(rs);
 			rs = null;
+			
 			DataBaseManager.close(pstmt);
 			pstmt = null;
-
+			
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
-	  return rumTestBeans;
+		
+		return rumTestBeans;
 	}
 
 	

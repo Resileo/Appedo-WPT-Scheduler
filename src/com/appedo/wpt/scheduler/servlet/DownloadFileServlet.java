@@ -24,7 +24,6 @@ import com.appedo.wpt.scheduler.manager.SUMManager;
 /**
  * Servlet implementation class DownloadFileServlet
  */
-//@WebServlet("/DownloadFileServlet")
 public class DownloadFileServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	static final int BUFFER_SIZE = 4096;
