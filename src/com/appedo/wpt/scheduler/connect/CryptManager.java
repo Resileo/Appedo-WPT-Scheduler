@@ -108,7 +108,7 @@ public class CryptManager {
 		encryptedValue = URLEncoder.encode(encryptedValue, "UTF-8");
 		
 		// presence of %2F in URL, throws request back as 400-Bad Request.
-		encryptedValue = encryptedValue.replaceAll("%", "QAMPERAGE");
+		encryptedValue = encryptedValue.replaceAll("%", "APDPERAGE");
 		
 		return encryptedValue;
 	}
@@ -137,8 +137,7 @@ public class CryptManager {
 	 * @throws Exception
 	 */
 	public static String decodeDecryptURL(String encryptedData) throws Exception {
-		// To avoid 400, %2F is replaced as QAM2F
-		encryptedData = encryptedData.replaceAll("QAMPERAGE", "%");
+		encryptedData = encryptedData.replaceAll("APDPERAGE", "%");
 		
 		encryptedData = URLDecoder.decode(encryptedData, "UTF-8");
 		
@@ -219,6 +218,5 @@ public class CryptManager {
 	public static void main(String args[]) throws Exception {
 		LogManager.infoLog(encrypt("10"));
 		LogManager.infoLog(decrypt("piyJabQwvLReQ2oPVC54fQ=="));
-		LogManager.infoLog(decodeDecryptURL("A2RyStGARFu4G7asxzaRJQQAMPERAGE3DQAMPERAGE3D"));
 	}
 }

@@ -19,7 +19,6 @@ public class Constants {
 	
 	public static boolean DEV_ENVIRONMENT = false;
 	
-	//public final static String CONFIGFILEPATH = InitServlet.realPath+"/WEB-INF/classes/com/softsmith/floodgates/resource/config.properties";
 	public static String CONSTANTS_FILE_PATH = "";
 	
 	public static String RESOURCE_PATH = "";
