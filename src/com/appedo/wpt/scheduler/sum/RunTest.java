@@ -64,10 +64,9 @@ public class RunTest extends Thread {
 		SUMManager sumManager = null;
 		boolean isDowntime=false;
 		try {
-			sumManager = new SUMManager();
-			// Pushing test to 70.70 server, get response 
+			sumManager = new SUMManager(); 
 			client = new HttpClient();
-			// URLEncoder.encode(requestUrl,"UTF-8");
+			
 			LogManager.infoLog("Before Starting Test through runtest.php for TestId: "+testBean.getTestId());
 			
 			method = new PostMethod(Constants.WPT_LOCATION_SERVER+"runtest.php");
@@ -142,7 +141,7 @@ public class RunTest extends Thread {
 					runTestCode = joData.getString("testId");
 				}
 				
-				// preparation of sum_har_results table
+				// TODO: Insert SUM har result in sum_har_test_results table.
 				long harId = sumManager.insertHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, testBean.getLocation(), testBean.getURL());
 				sumManager.updateMeasurementCntInUserMaster(testBean.getTestId());
 				// sumManager.updateSumTestLastRunDetail(testBean.getTestId());
@@ -152,7 +151,6 @@ public class RunTest extends Thread {
 					int cnt = 1;
 					while(statusCheckStatus != 200){
 						client = new HttpClient();
-						// URLEncoder.encode(requestUrl,"UTF-8");
 						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"testStatus.php");
 						method.addParameter("f", "json");
 						method.addParameter("test", runTestCode);
@@ -174,13 +172,9 @@ public class RunTest extends Thread {
 								if ( cnt > 20 || ! ( statusCheckStatus == 100 || statusCheckStatus == 101 ) ) {
 									// If status code is not `200` , make sleep it for 10 secs
 									LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> "+statusCheckStatus);
-								}
-								
+								}	
 								Thread.sleep(10*1000);
 							}
-							
-							// To update har table status for showing in New SUM UI
-							// sumManager.updateHarTable(testBean.getTestId(), joResponse.getInt("statusCode"), joResponse.getString("statusText"), runTestCode, 0, 0);
 						}
 						cnt++;
 					}
@@ -188,49 +182,48 @@ public class RunTest extends Thread {
 					
 					if( statusCheckStatus == 200 ){
 						client = new HttpClient();
-						// URLEncoder.encode(requestUrl,"UTF-8");
 						LogManager.infoLog("Before jsonResult.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
 						
 						method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+runTestCode+"/");
-						// method.addParameter("test", runTestCode);
 						method.setRequestHeader("Connection", "close");
 						statusCode = client.executeMethod(method);
 						responseStream = method.getResponseBodyAsString();
 						org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
 						
 						// TODO what is the response for stopped servers; Send SLA
-						
-/*						if( xmlJSONObj.toString().startsWith("{") && xmlJSONObj.toString().endsWith("}")) {
-							joResponse = JSONObject.fromObject(xmlJSONObj.toString());*/
-							if ( ! xmlJSONObj.has("response") ) {
-								LogManager.infoLog("xmlJSONObj does not contain response: TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
-							} else {
-								org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
-								if(jores.has("data")){
-									org.json.JSONObject joData = jores.getJSONObject("data");
+						if ( ! xmlJSONObj.has("response") ) {
+							LogManager.infoLog("xmlJSONObj does not contain response: TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+						} else {
+							org.json.JSONObject jores = xmlJSONObj.getJSONObject("response");
+							if(jores.has("data")){
+								org.json.JSONObject joData = jores.getJSONObject("data");
 
-									double repeatLoadTime = 0, firstLoadTime = 0;
-									double TTFB=0, render=0, domElements=0, docTime=0, requestsDoc=0, bytesInDoc=0, fullyLoaded=0, requests=0, bytesIn=0;
-									double rTTFB=0, rrender=0, rdomElements=0, rdocTime=0, rrequestsDoc=0, rbytesInDoc=0, rfullyLoaded=0, rrequests=0, rbytesIn=0;
+								double repeatLoadTime = 0, firstLoadTime = 0;
+								double TTFB=0, render=0, domElements=0, docTime=0, requestsDoc=0, bytesInDoc=0, fullyLoaded=0, requests=0, bytesIn=0;
+								double rTTFB=0, rrender=0, rdomElements=0, rdocTime=0, rrequestsDoc=0, rbytesInDoc=0, rfullyLoaded=0, rrequests=0, rbytesIn=0;
+								
+								if(joData.has("run")){
+									org.json.JSONObject jorun = joData.getJSONObject("run");
+									JSONObject joResultValue = new JSONObject();
 									
-									if(joData.has("run")){
-										org.json.JSONObject jorun = joData.getJSONObject("run");
-										JSONObject joResultValue = new JSONObject();
+									if(jorun.has("firstView") && jorun.get("firstView") instanceof org.json.JSONObject){
+										org.json.JSONObject joFView = jorun.getJSONObject("firstView");
 										
-										if(jorun.has("firstView") && jorun.get("firstView") instanceof org.json.JSONObject){
-											org.json.JSONObject joFView = jorun.getJSONObject("firstView");
-											
-											if( joFView.has("status") && joFView.getString("status").length() > 0){
-												LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" - "+joFView.getString("status"));
-												isDowntime=true;
-											}
-											
-											if(joFView.has("numSteps")) {
-												int numSteps = joFView.getInt("numSteps");
-												if(joFView.has("step")) {
-													org.json.JSONArray jaFvStep = joFView.getJSONArray("step");
-													for (int i = 0; i < numSteps; i++) {
-														if(jaFvStep.getJSONObject(i).has("results") && jaFvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
+										if( joFView.has("status") && joFView.getString("status").length() > 0){
+											LogManager.infoLog("Status of the url configured with the TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" - "+joFView.getString("status"));
+											isDowntime=true;
+										}
+										
+										if(joFView.has("numSteps")) {
+											int numSteps = joFView.getInt("numSteps");
+											if(joFView.has("step")) {
+												org.json.JSONArray jaFvStep = joFView.getJSONArray("step");
+												for (int i = 0; i < numSteps; i++) {
+													if(jaFvStep.getJSONObject(i).has("results") && jaFvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
+														
+														if(jaFvStep.getJSONObject(i).getJSONObject("results").getInt("result") > 200) {
+															isDowntime = true;
+														}else {
 															firstLoadTime = firstLoadTime + jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
 															
 															TTFB = TTFB + (jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("TTFB")/1000);
@@ -243,8 +236,13 @@ public class RunTest extends Thread {
 															requests = requests + jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("requests");
 															bytesIn = bytesIn + (jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("bytesIn")/1024);
 														}
+								
 													}
-												}else if (joFView.has("results")) {
+												}
+											}else if (joFView.has("results")) {
+												if(joFView.getJSONObject("results").getInt("result") > 200) {
+													isDowntime = true;
+												}else {
 													firstLoadTime = joFView.getJSONObject("results").getDouble("loadTime");
 													
 													TTFB = (joFView.getJSONObject("results").getDouble("TTFB")/1000);
@@ -257,31 +255,36 @@ public class RunTest extends Thread {
 													requests = joFView.getJSONObject("results").getDouble("requests");
 													bytesIn = (joFView.getJSONObject("results").getDouble("bytesIn")/1024);
 												}
+												
 											}
-											
-											joResultValue.put("loadTime", firstLoadTime/1000);
-											joResultValue.put("TTFB", TTFB);
-											joResultValue.put("render", render);
-											joResultValue.put("domElements", domElements);
-											joResultValue.put("docTime", docTime);
-											joResultValue.put("requestsDoc", requestsDoc);
-											joResultValue.put("bytesInDoc", bytesInDoc);
-											joResultValue.put("fullyLoaded", fullyLoaded);
-											joResultValue.put("requests", requests);
-											joResultValue.put("bytesIn", bytesIn);
-											
 										}
 										
-										if(jorun.has("repeatView") && jorun.get("repeatView") instanceof org.json.JSONObject) {
-											org.json.JSONObject joRView = jorun.getJSONObject("repeatView");
-											
-											//get the repeated view load time
-											if(joRView.has("numSteps")) {
-												int numSteps = joRView.getInt("numSteps");
-												if(joRView.has("step")) {
-													org.json.JSONArray jaRvStep = joRView.getJSONArray("step");
-													for (int i = 0; i < numSteps; i++) {
-														if(jaRvStep.getJSONObject(i).has("results") && jaRvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
+										joResultValue.put("loadTime", firstLoadTime/1000);
+										joResultValue.put("TTFB", TTFB);
+										joResultValue.put("render", render);
+										joResultValue.put("domElements", domElements);
+										joResultValue.put("docTime", docTime);
+										joResultValue.put("requestsDoc", requestsDoc);
+										joResultValue.put("bytesInDoc", bytesInDoc);
+										joResultValue.put("fullyLoaded", fullyLoaded);
+										joResultValue.put("requests", requests);
+										joResultValue.put("bytesIn", bytesIn);
+										
+									}
+									
+									if(jorun.has("repeatView") && jorun.get("repeatView") instanceof org.json.JSONObject) {
+										org.json.JSONObject joRView = jorun.getJSONObject("repeatView");
+										
+										//TODO: get the repeated view load time
+										if(joRView.has("numSteps")) {
+											int numSteps = joRView.getInt("numSteps");
+											if(joRView.has("step")) {
+												org.json.JSONArray jaRvStep = joRView.getJSONArray("step");
+												for (int i = 0; i < numSteps; i++) {
+													if(jaRvStep.getJSONObject(i).has("results") && jaRvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
+														if(jaRvStep.getJSONObject(i).getJSONObject("results").getInt("result") > 200) {
+															isDowntime = true;
+														}else {
 															repeatLoadTime = repeatLoadTime + jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
 															
 															rTTFB = rTTFB + (jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("TTFB")/1000);
@@ -294,8 +297,13 @@ public class RunTest extends Thread {
 															rrequests = rrequests + jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("requests");
 															rbytesIn = rbytesIn + (jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("bytesIn")/1024);
 														}
+														
 													}
-												}else if(joRView.has("results")) {
+												}
+											}else if(joRView.has("results")) {
+												if(joRView.getJSONObject("results").getInt("result") > 200) {
+													isDowntime = true;
+												}else {
 													repeatLoadTime = joRView.getJSONObject("results").getDouble("loadTime");
 													
 													rTTFB = (joRView.getJSONObject("results").getDouble("TTFB")/1000);
@@ -308,110 +316,75 @@ public class RunTest extends Thread {
 													rrequests = joRView.getJSONObject("results").getDouble("requests");
 													rbytesIn = (joRView.getJSONObject("results").getDouble("bytesIn")/1024);
 												}
+												
 											}
-											
-											joResultValue.put("rloadTime", repeatLoadTime/1000);
-											joResultValue.put("rTTFB", rTTFB);
-											joResultValue.put("rrender", rrender);
-											joResultValue.put("rdomElements", rdomElements);
-											joResultValue.put("rdocTime", rdocTime);
-											joResultValue.put("rrequestsDoc", rrequestsDoc);
-											joResultValue.put("rbytesInDoc", rbytesInDoc);
-											joResultValue.put("rfullyLoaded", rfullyLoaded);
-											joResultValue.put("rrequests", rrequests);
-											joResultValue.put("rbytesIn", rbytesIn);
 										}
 										
-										sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue(), joResultValue);
+										joResultValue.put("rloadTime", repeatLoadTime/1000);
+										joResultValue.put("rTTFB", rTTFB);
+										joResultValue.put("rrender", rrender);
+										joResultValue.put("rdomElements", rdomElements);
+										joResultValue.put("rdocTime", rdocTime);
+										joResultValue.put("rrequestsDoc", rrequestsDoc);
+										joResultValue.put("rbytesInDoc", rbytesInDoc);
+										joResultValue.put("rfullyLoaded", rfullyLoaded);
+										joResultValue.put("rrequests", rrequests);
+										joResultValue.put("rbytesIn", rbytesIn);
 									}
-									//if( joData.has("average") ){
-										/*org.json.JSONObject joAverage = joData.getJSONObject("average");
-										double repeatLoadTime = 0, firstLoadTime = 0;
-										if(joAverage.get("firstView") instanceof org.json.JSONObject){
-											org.json.JSONObject joFirstView = joAverage.getJSONObject("firstView");
-											if( joFirstView.has("loadTime") ){
-												firstLoadTime = joFirstView.getInt("loadTime");
-											}
-										} 
-										if(joAverage.has("repeatView") && joAverage.get("repeatView") instanceof org.json.JSONObject){
-											org.json.JSONObject joRepeatView = joAverage.getJSONObject("repeatView");
-											if( joRepeatView.has("loadTime") ){
-												repeatLoadTime = joRepeatView.getInt("loadTime");
-											}
-										} 
-										sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
-										*/
-										// SLA
-										JSONObject joSLA = new JSONObject();
-										joSLA.put("sla_id", testBean.getSlaId());
-										joSLA.put("userid", testBean.getUserId());
-										joSLA.put("sla_sum_id", testBean.getSlaSumId());
-										joSLA.put("sum_test_id", testBean.getTestId());
-										joSLA.put("har_id", harId);
-										joSLA.put("is_above", testBean.isAboveThreshold());
-										joSLA.put("threshold_set_value", testBean.getThresholdValue());	
-										joSLA.put("err_set_value", testBean.getErrorValue());
-										joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
-										joSLA.put("appedoReceivedOn", new Date().getTime());
-										joSLA.put("min_breach_count", testBean.getMinBreachCount());
-										joSLA.put("location", strLocation.split(":")[0]);
-										joSLA.put("is_Down", isDowntime);
-										
-										if( testBean.getThresholdValue() > 0 && firstLoadTime > (testBean.getThresholdValue()*1000) ) {
-											joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue()*1000)?"CRITICAL":"WARNING");
-											
-											LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
-											
-											client = new HttpClient();
-											// URLEncoder.encode(requestUrl,"UTF-8");
-											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-											method.addParameter("command", "sumBreachCounterSet");
-											method.addParameter("sumBreachCounterset", joSLA.toString());
-//											method.setRequestHeader("Connection", "close");
-											statusCode = client.executeMethod(method);
-										}
-										
-/*										if( isDowntime && testBean.isDownTimeAlert()){
-											joSLA.put("type", "Configured Site is Down");
-											joSLA.put("is_Down", isDowntime);
-											System.out.println("json sla for SUM Alert at Downtime:: "+joSLA.toString());
-											client = new HttpClient();
-											// URLEncoder.encode(requestUrl,"UTF-8");
-											method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-											method.addParameter("command", "sumDownTimeAlert");
-											method.addParameter("sumBreachCounterset", joSLA.toString());
-//											method.setRequestHeader("Connection", "close");
-											statusCode = client.executeMethod(method);
-										} */
-									//}
 									
-									// Insert Json into db
-									sumManager.insertResultJson(joData, harId);
+									sumManager.updateHarTable(testBean.getTestId(), jores.getInt("statusCode"), jores.getString("statusText"), runTestCode, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue(), joResultValue);
 								}
-							}
-							
-							LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
-							String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
-							String saveDir = Constants.HAR_PATH+testBean.getTestId();
-							// Downloads HAR from WPT server and keep it in wpt_scheduler instance
-							HttpDownloadUtility.downloadFile(fileURL, saveDir);
-							
-							try {
-								File file = new File(saveDir);
+								// SLA Process.
+								JSONObject joSLA = new JSONObject();
+								joSLA.put("sla_id", testBean.getSlaId());
+								joSLA.put("userid", testBean.getUserId());
+								joSLA.put("sla_sum_id", testBean.getSlaSumId());
+								joSLA.put("sum_test_id", testBean.getTestId());
+								joSLA.put("har_id", harId);
+								//joSLA.put("is_above", testBean.isAboveThreshold());
+								joSLA.put("threshold_set_value", testBean.getThresholdValue());	
+								joSLA.put("err_set_value", testBean.getErrorValue());
+								joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
+								joSLA.put("appedoReceivedOn", new Date().getTime());
+								joSLA.put("min_breach_count", testBean.getMinBreachCount());
+								joSLA.put("location", strLocation.split(":")[0]);
+								joSLA.put("is_Down", isDowntime);
 								
-								for(int i=0;i<file.listFiles().length;i++){
-									File f = file.listFiles()[i];
-									sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
-									// Exports HAR files to the HAR repository
-									JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
-									if(jo.getBoolean("success")){
-										deleteHar(saveDir+"/"+f.getName());
-									}
+								if( (testBean.getThresholdValue() > 0 && firstLoadTime > (testBean.getThresholdValue()*1000)) || isDowntime ) {
+									joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue()*1000)?"CRITICAL":"WARNING");
+									LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
+									client = new HttpClient();
+									method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+									method.addParameter("command", "sumBreachCounterSet");
+									method.addParameter("sumBreachCounterset", joSLA.toString());
+									statusCode = client.executeMethod(method);
 								}
-							} catch (Throwable th) {
-								LogManager.errorLog(th);
+								// TODO: Insert SUM-JSON Result into sum_har_test_results.
+								sumManager.insertResultJson(joData, harId);
 							}
-						//}
+						}
+							
+						LogManager.infoLog("Before export.php for TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode);
+						String fileURL = Constants.WPT_LOCATION_SERVER+"export.php?bodies=1&pretty=1&test="+runTestCode;
+						String saveDir = Constants.HAR_PATH+testBean.getTestId();
+						// Downloads HAR from WPT server and keep it in wpt_scheduler instance
+						HttpDownloadUtility.downloadFile(fileURL, saveDir);
+						
+						try {
+							File file = new File(saveDir);
+							
+							for(int i=0;i<file.listFiles().length;i++){
+								File f = file.listFiles()[i];
+								sumManager.updateHarFileNameInTable(testBean.getTestId(), runTestCode, f.getName());
+								// TODO: Exports HAR files to the HAR repository
+								JSONObject jo = exportHarFile(saveDir+"/"+f.getName(), f.getName(), ""+testBean.getTestId());
+								if(jo.getBoolean("success")){
+									deleteHar(saveDir+"/"+f.getName());
+								}
+							}
+						} catch (Throwable th) {
+							LogManager.errorLog(th);
+						}
 					}
 				}
 			}
@@ -488,6 +461,7 @@ public class RunTest extends Thread {
 				// reads server's response
 				reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
 				String response = reader.readLine();
+				LogManager.infoLog("Server return response : "+ response);
 			} else {
 				LogManager.errorLog("Server returned non-OK code: " + responseCode);
 				joResponse.put("success", false);

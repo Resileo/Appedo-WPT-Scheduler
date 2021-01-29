@@ -36,6 +36,7 @@ public class Constants {
 	public static String LOG4J_PROPERTIES_FILE = "";
 	public static String EXPORT_URL;
 	public static String HAR_PATH, APPEDO_SLA_COLLECTOR, WPT_LOCATION_SERVER;
+	public static float TRANSACTION_CUSTOM_DOWN_VALUE;
 	
 	
 	/**
@@ -101,6 +102,7 @@ public class Constants {
 			EXPORT_URL = getProperty("URL_TO_EXPORT_HAR", prop);
 			APPEDO_SLA_COLLECTOR = getProperty("APPEDO_SLA_COLLECTOR", prop);
 			WPT_LOCATION_SERVER = getProperty("WPT_LOCATION_SERVER", prop);
+			TRANSACTION_CUSTOM_DOWN_VALUE = Float.parseFloat(getProperty("CUSTOM_DOWN_ALERT", prop));
 			
 		} catch(Exception e) {
 			LogManager.errorLog(e);

@@ -4,13 +4,16 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.PostMethod;
+
 import net.sf.json.JSONObject;
 
 import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
-import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
-import com.appedo.wpt.scheduler.bean.SUMNodeBean;
 import com.appedo.wpt.scheduler.bean.SUMTestBean;
+import com.appedo.wpt.scheduler.common.Constants;
 import com.appedo.wpt.scheduler.dbi.SUMDBI;
 import com.appedo.wpt.scheduler.sum.RunTest;
 import com.appedo.wpt.scheduler.utils.UtilsFactory;
@@ -49,29 +52,17 @@ public class SUMManager {
 	
 	public Object[] getSUMTestForLocation(String strLocation, String mac) {
 		SUMTestBean sumTestBean = null;
-		SUMNodeBean sumNodeBean = null;
-		NodeManager manager = null;
-		SUMAuditLogBean auditLogBean = null;
 		Connection con = null;
-		
 		try {
 			con = DataBaseManager.giveConnection();
-			manager = new NodeManager();
 			sumTestBean = SUMScheduler.pollSUMTest(strLocation);
-			
-			if( sumTestBean != null ) {
-				sumNodeBean = manager.getNodeDetails(con, mac);
-			//	sumTestBean.setUserId(Integer.parseInt(userId));
-			//	auditLogBean = manager.insertSUMlog(sumTestBean, sumNodeBean, strLocation, "Agent polled bean from queue");
-			}
 		} catch (Throwable th) {
 			LogManager.errorLog(th);
 		} finally {
 			DataBaseManager.close(con);
 			con = null;
 		}
-		
-		return new Object[]{sumTestBean, auditLogBean};
+		return new Object[]{sumTestBean};
 	}
 	
 	/**
@@ -86,12 +77,10 @@ public class SUMManager {
 		JSONObject jsonObject = null;
 		boolean status = false;
 		try {
-			
 			con = DataBaseManager.giveConnection();
 			sumdbi = new SUMDBI();
 			jsonObject = sumdbi.getUserDetails(con, testBean.getUserId());
 
-//			LogManager.infoLog("Json:: "+jsonObject.toString());
 			if( !jsonObject.containsKey("start_date") ){
 				sumdbi.deactivateTest(con, testBean.getUserId());
 				status = true;
@@ -99,7 +88,6 @@ public class SUMManager {
 				int maxNodeCount = sumdbi.getMaxMeasurementPerMonth(con, testBean.getUserId(), jsonObject);
 				if ( maxNodeCount >= jsonObject.getInt("max_measurement_per_day") && jsonObject.getInt("max_measurement_per_day") != -1 ){ 
 					LogManager.infoLog("Max Measurement Reached for the day: "+testBean.getUserId());
-					// sumdbi.deactivateTest(con, testBean.getUserId());
 					status = true;
 				} else{
 					status = false;
@@ -117,6 +105,71 @@ public class SUMManager {
 		return status;
 	}
 
+
+	public void sendSlaAlert(long test_id, boolean isDowntime, double firstLoadTime, String location) throws Exception {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		HttpClient client = null;
+		PostMethod method = null;
+		int statusCode;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			JSONObject joSLA = sumdbi.getTestIdDetails(con, test_id);
+			
+			if( isDowntime || (joSLA.getInt("threshold_set_value") > 0 && firstLoadTime > (joSLA.getInt("threshold_set_value")*1000)) ) {
+				joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
+				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value")*1000)?"CRITICAL":"WARNING");
+				joSLA.put("location", location);
+				joSLA.put("is_Down", isDowntime);
+				
+				LogManager.infoLog("json sla for SUM TestId: "+joSLA.getString("userid")+" <> SLA Alert :: "+joSLA.toString());
+				
+				client = new HttpClient();
+				method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+				method.addParameter("command", "sumBreachCounterSet");
+				method.addParameter("sumBreachCounterset", joSLA.toString());
+				statusCode = client.executeMethod(method);
+				if (statusCode != HttpStatus.SC_OK) {
+					LogManager.errorLog("Method failed: " + method.getStatusLine());
+				}
+			}
+		}catch (Exception e) {
+			LogManager.errorLog(e);
+		}
+	}
+	
+	public void sendCustomDownAlert(long test_id, String custom_key, String location) throws Exception {
+		Connection con = null;
+		SUMDBI sumdbi = null;
+		HttpClient client = null;
+		PostMethod method = null;
+		int statusCode;
+		try {
+			con = DataBaseManager.giveConnection();
+			sumdbi = new SUMDBI();
+			JSONObject joSLA = sumdbi.getTestIdDetails(con, test_id);		
+			joSLA.put("location", location);
+			joSLA.put("type", "Configured Site is Down");
+			joSLA.put("is_Down", true);
+			joSLA.put("custom_key", custom_key);
+			
+			LogManager.infoLog("json sla for SUM TestId: "+joSLA.getString("userid")+" <> SLA Alert :: "+joSLA.toString());
+			
+			client = new HttpClient();
+			method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
+			method.addParameter("command", "sumCustomDownTimeAlert");
+			method.addParameter("sumBreachCounterset", joSLA.toString());
+			statusCode = client.executeMethod(method);
+			if (statusCode != HttpStatus.SC_OK) {
+				LogManager.errorLog("Method failed: " + method.getStatusLine());
+			}
+		
+		}catch (Exception e) {
+			LogManager.errorLog(e);
+		}
+	}
+	
 	public long insertHarTable(long testId, int statusCode, String statusText, String runTestCode, String location, String testUrl) {
 		Connection con = null;
 		SUMDBI sumdbi = null;
