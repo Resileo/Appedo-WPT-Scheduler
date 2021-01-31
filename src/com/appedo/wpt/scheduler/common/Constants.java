@@ -102,7 +102,7 @@ public class Constants {
 			EXPORT_URL = getProperty("URL_TO_EXPORT_HAR", prop);
 			APPEDO_SLA_COLLECTOR = getProperty("APPEDO_SLA_COLLECTOR", prop);
 			WPT_LOCATION_SERVER = getProperty("WPT_LOCATION_SERVER", prop);
-			TRANSACTION_CUSTOM_DOWN_VALUE = Float.parseFloat(getProperty("CUSTOM_DOWN_ALERT", prop));
+			TRANSACTION_CUSTOM_DOWN_VALUE = Float.parseFloat(getProperty("SUM_CUSTOM_DOWN_ALERT", prop));
 			
 		} catch(Exception e) {
 			LogManager.errorLog(e);
