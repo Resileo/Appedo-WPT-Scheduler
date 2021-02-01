@@ -14,10 +14,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import com.appedo.commons.connect.DataBaseManager;
 import com.appedo.manager.LogManager;
 import com.appedo.wpt.scheduler.bean.SUMAuditLogBean;
@@ -131,10 +129,47 @@ public class SUMDBI {
 				// manager.runRUMTests(testBean);
 			}
 		} catch (Throwable ex) {
-			LogManager.errorLog(ex);
+			LogManager.errorLog(ex, sbQuery);
 			throw ex;
 		} finally {
 			LogManager.logMethodEnd(dateLog);
+			
+			DataBaseManager.close(rs);
+			rs = null;
+			
+			DataBaseManager.close(pstmt);
+			pstmt = null;
+			
+			UtilsFactory.clearCollectionHieracy( sbQuery );
+		}
+		
+		return rumTestBeans;
+	}
+
+	public JSONObject getTestIdDetails(Connection con, long test_id) throws Exception{
+		JSONObject joSumDetails = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		StringBuilder sbQuery = new StringBuilder();
+		try {
+			joSumDetails = new JSONObject();
+			sbQuery .append("SELECT test_id, sla_id, user_id, warning, error FROM ")
+					.append("sum_test_master stm JOIN so_sla_sum sss ON stm.test_id = sss.sum_test_id ")
+					.append("WHERE stm.test_id = ").append(test_id);
+			
+			pstmt = con.prepareStatement(sbQuery.toString());
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				joSumDetails.put("userid", rs.getString("user_id"));
+				joSumDetails.put("sum_test_id", rs.getString("test_id"));
+				joSumDetails.put("threshold_set_value", rs.getString("warning"));
+				joSumDetails.put("err_set_value", rs.getString("error"));
+				joSumDetails.put("sla_id", rs.getString("sla_id"));
+			}
+		}catch (Exception ex) {
+			LogManager.errorLog(ex);
+			throw ex;
+		} finally {
 			DataBaseManager.close(rs);
 			rs = null;
 			DataBaseManager.close(pstmt);
@@ -142,9 +177,9 @@ public class SUMDBI {
 
 			UtilsFactory.clearCollectionHieracy( sbQuery );
 		}
-	  return rumTestBeans;
+	  return joSumDetails;	
 	}
-
+	
 	
 	/**
 	 * Gets the cluster_id from mapping table by passing test_id
@@ -376,6 +411,7 @@ public class SUMDBI {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public long insertSUMlog(Connection con, SUMAuditLogBean auditLogBean) throws Throwable {
 		PreparedStatement pstmt = null;
 		StringBuilder sbQuery = new StringBuilder();
@@ -500,10 +536,8 @@ public class SUMDBI {
 	public int getMaxMeasurementPerMonth(Connection con, long userId, JSONObject jsonObject) throws Exception {
 		PreparedStatement pstmt = null;
 		ResultSet rst = null;
-
 		StringBuilder sbQuery = new StringBuilder();
 		int nUserTotalRuncount = 0;
-		// Timestamp startTime = new Timestamp(jsonObject.getLong("start_date"));
 		Date dateLog = LogManager.logMethodStart();
 
 		try {
@@ -643,6 +677,7 @@ public class SUMDBI {
 	}
 
 
+	@SuppressWarnings("deprecation")
 	public long insertHarTable(Connection con, long testId, int statusCode, String statusText, String runTestCode, String location, String testUrl) {
 		PreparedStatement pstmt = null, stmt = null;
 		StringBuilder sbQuery = new StringBuilder();
@@ -927,6 +962,7 @@ public class SUMDBI {
 	 * @return boolean
 	 * @throws Exception
 	 */
+	@SuppressWarnings("deprecation")
 	public boolean insertNewDesktopAgents(Connection con, Set < String > locToUpadate) throws Exception {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmt1 = null;
@@ -997,6 +1033,7 @@ public class SUMDBI {
 	 * @return boolean
 	 * @throws Exception 
 	 */
+	@SuppressWarnings("deprecation")
 	public boolean insertNewMobileAgents(Connection con, Set < String > locToUpadate) throws Exception {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmt1 = null;

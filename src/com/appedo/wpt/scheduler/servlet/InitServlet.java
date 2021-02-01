@@ -59,7 +59,7 @@ public class InitServlet extends HttpServlet {
 			Constants.loadConstantsProperties(Constants.CONSTANTS_FILE_PATH);
 			
 			// Loads db config
-			DataBaseManager.doConnectionSetupIfRequired("Appedo-Collector", Constants.APPEDO_CONFIG_FILE_PATH, true);
+			DataBaseManager.doConnectionSetupIfRequired("Appedo-WPT-Scheduler", Constants.APPEDO_CONFIG_FILE_PATH, true);
 			
 			con = DataBaseManager.giveConnection();
 			

@@ -69,7 +69,6 @@ public class SUMScheduler {
 				}
 			}
 		} catch (Exception e) {
-			LogManager.errorLog(e);
 			throw e;
 		}
 		
@@ -79,6 +78,7 @@ public class SUMScheduler {
 	public static SUMTestBean pollSUMTest(String strLocation) throws Exception {
 		LinkedHashSet<SUMTestBean> setSUMLoc = null;
 		SUMTestBean sumTestBean = null;
+		
 		try{
 			// a client is available in a location. Add a queue for it; if not available
 			if (htSUMLocationTestQueues.containsKey(strLocation)) {
@@ -97,7 +97,6 @@ public class SUMScheduler {
 				return sumTestBean;
 			}
 		} catch (Exception e) {
-			LogManager.errorLog(e);
 			throw e;
 		}
 	}

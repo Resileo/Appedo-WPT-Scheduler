@@ -20,6 +20,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.json.JSONArray;
 import org.json.XML;
 
 import com.appedo.commons.connect.DataBaseManager;
@@ -30,21 +31,23 @@ import com.appedo.wpt.scheduler.sum.HttpDownloadUtility;
 
 /*
  * Get the url from wpt server to process the result.
+ * 
  */
 public class TransactionResult extends HttpServlet {
-
+	private static final long serialVersionUID = 1L;
+	
 	Connection con = null;
 	public TransactionResult() {
 		super();
 	}
 
 	protected void doGet(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
+	HttpServletResponse response) throws ServletException, IOException {
 		doAction(request, response);
 	}
 
 	protected void doPost(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
+	HttpServletResponse response) throws ServletException, IOException {
 		doAction(request, response);
 	}
 
@@ -55,19 +58,19 @@ public class TransactionResult extends HttpServlet {
 		String responseStream = "";
 		JSONObject joResponse = null;
 		boolean isDowntime = false;
+		boolean isCustomDowntime = false;
+		JSONArray jaCustomAlertKeys = new JSONArray();
 		double repeatLoadTime = 0, firstLoadTime = 0;
 		
 		try {
 			con = DataBaseManager.giveConnection();
 			long test_id = Long.valueOf(request.getParameter("testid"));
 			String wpt_test_code = request.getParameter("testcode");
-			//statusCode = Integer.valueOf(request.getParameter("statuscode"));
-			//String statusText = request.getParameter("statustext");
 			String location = request.getParameter("location");
 			
 			SUMManager sumManager = new SUMManager();
 			
-			//update the details in db.
+			// TODO: Insert the SUM Transaction details in DB.
 			LogManager.infoLog("Transaction update started for test id :"+test_id+" and location :"+location);
 			long harId = sumManager.insertHarTable(test_id, -1,"", wpt_test_code,location+":CHROME.Native", "TRANSACTION");
 
@@ -76,7 +79,6 @@ public class TransactionResult extends HttpServlet {
 				int cnt = 1;
 				while(statusCheckStatus != 200){
 					client = new HttpClient();
-					// URLEncoder.encode(requestUrl,"UTF-8");
 					method = new PostMethod(Constants.WPT_LOCATION_SERVER+"testStatus.php");
 					method.addParameter("f", "json");
 					method.addParameter("test", wpt_test_code);
@@ -89,34 +91,31 @@ public class TransactionResult extends HttpServlet {
 					if( responseStream.trim().startsWith("{") && responseStream.trim().endsWith("}")) {
 						joResponse = JSONObject.fromObject(responseStream);
 						statusCheckStatus = joResponse.getInt("statusCode");
-						
-						//sumManager.updateHarTable(test_id, statusCode,statusText, wpt_test_code, 0, 0);
+
 						sumManager.updateHarTable(test_id, joResponse.getInt("statusCode"), joResponse.getString("statusText"),wpt_test_code, 0, 0);
 					}
 					
-					// Log the exceptions
 					if( statusCheckStatus != 200 ) {
-						// Avoid printing 100 & 101 for first few iterations, as the test could be in WIP in WPT side.
+						// TODO: Avoid printing 100 & 101 for first few iterations, as the test could be in WIP in WPT side.
 						if ( cnt > 20 || ! ( statusCheckStatus == 100 || statusCheckStatus == 101 ) ) {
-							// If status code is not `200` , make sleep it for 10 secs
+							// If status code is not `200` , make sleep it for 10 sec.
 							LogManager.errorLog("Status-Code from testStatus.php, for TestId: "+test_id+" <> runTestCode: "+wpt_test_code+" <> "+statusCheckStatus);
 						}
 						Thread.sleep(10*1000);
-					}
-					
+					}					
 					cnt++;
 				}
+				
 				LogManager.infoLog("While loop count of testStatus.php: "+cnt+" TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
 			
 				if( statusCheckStatus == 200 ){
-					client = new HttpClient();
-					// URLEncoder.encode(requestUrl,"UTF-8");
 					LogManager.infoLog("Before jsonResult.php for TestId: "+test_id+" <> runTestCode: "+wpt_test_code);
+					client = new HttpClient();
 					method = new PostMethod(Constants.WPT_LOCATION_SERVER+"xmlResult/"+wpt_test_code+"/");
-					// method.addParameter("test", wpt_test_code);
 					method.setRequestHeader("Connection", "close");
 					statusCode = client.executeMethod(method);
 					responseStream = method.getResponseBodyAsString();
+					JSONArray jaCustomKey = null; 
 					
 					org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
 					if (xmlJSONObj.has("response")) {
@@ -137,8 +136,41 @@ public class TransactionResult extends HttpServlet {
 															.getJSONObject("results").getInt("loadTime");
 								}
 								
-								// Update table entry
-								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
+								if(joData.has("run") && joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").has("custom")) {
+									jaCustomKey = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getJSONArray("custom");
+									for(int i =0; i<jaCustomKey.length(); i++) {
+										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getInt(jaCustomKey.getString(i));
+										if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
+											isCustomDowntime = true;
+											jaCustomAlertKeys.put(jaCustomKey.getString(i));
+										}
+									}
+								}
+								
+							} else if( joData.has("run") && joData.getJSONObject("run").has("firstView") && joData.getJSONObject("run").getJSONObject("firstView").has("results") ) {
+								
+								firstLoadTime = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getDouble("loadTime");
+								
+								if( joData.has("run") && joData.getJSONObject("run").has("repeatView") && joData.getJSONObject("run").getJSONObject("repeatView").has("result") ) {
+									
+									repeatLoadTime = joData.getJSONObject("run").getJSONObject("repeatView").getJSONObject("results").getInt("loadTime");
+								}
+
+								if(joData.has("run") && joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getInt("result") > 200) {
+									isDowntime = true;
+								}
+								
+								if(joData.has("run") && joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").has("custom")) {
+									jaCustomKey = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getJSONArray("custom");
+									for(int i =0; i<jaCustomKey.length(); i++) {
+										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getInt(jaCustomKey.getString(i));
+										if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
+											isCustomDowntime = true;
+											jaCustomAlertKeys.put(jaCustomKey.getString(i));
+										}
+									}
+									 
+								}
 								
 							} else if( joData.has("average") ){
 								org.json.JSONObject joAverage = joData.getJSONObject("average");
@@ -155,25 +187,18 @@ public class TransactionResult extends HttpServlet {
 									isDowntime = true;
 								}
 								
-								// Update table entry
-								sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
+							}
+							
+							// Update table entry
+							sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 								
-								// SLA
-								JSONObject joSLA = new JSONObject();
-								if( isDowntime ){
-									joSLA.put("sum_test_id", test_id);
-									joSLA.put("location", location);
-									joSLA.put("har_id", harId);
-									joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
-									joSLA.put("type", "Configured Site is Down");
-									joSLA.put("is_Down", isDowntime);
-									LogManager.infoLog("json sla for SUM Alert at Downtime:: "+joSLA.toString());
-									client = new HttpClient();
-									// URLEncoder.encode(requestUrl,"UTF-8");
-									method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
-									method.addParameter("command", "sumDownTimeAlert");
-									method.addParameter("sumBreachCounterset", joSLA.toString());
-									statusCode = client.executeMethod(method);
+							// TODO: Send SLA Alert for Threshold value & Down Time
+							sumManager.sendSlaAlert(test_id, isDowntime, firstLoadTime, location);
+							
+							// TODO: send Transaction custom SLA Alert.
+							if(isCustomDowntime && jaCustomAlertKeys.length() > 0) {
+								for(int i=0; i<jaCustomAlertKeys.length(); i++) {
+									sumManager.sendCustomDownAlert(test_id, jaCustomAlertKeys.getString(i), location);
 								}
 							}
 							
@@ -304,10 +329,7 @@ public class TransactionResult extends HttpServlet {
 	public static void main(String[] args) {
 		HttpClient client = null;
 		PostMethod method = null;
-		int statusCode = -1;
 		String responseStream = "";
-		JSONObject joResponse = null;
-		boolean isDowntime = false;
 		double repeatLoadTime = 0, firstLoadTime = 0;
 		
 		try {
@@ -315,7 +337,7 @@ public class TransactionResult extends HttpServlet {
 			method = new PostMethod("https://test-wpt.appedo.com/xmlResult/171228_BX_2T/");
 			// method.addParameter("test", wpt_test_code);
 			method.setRequestHeader("Connection", "close");
-			statusCode = client.executeMethod(method);
+			client.executeMethod(method);
 			responseStream = method.getResponseBodyAsString();
 			
 			org.json.JSONObject xmlJSONObj = XML.toJSONObject(responseStream);
@@ -343,6 +365,7 @@ public class TransactionResult extends HttpServlet {
 					}
 				}
 			}
+			System.out.println("firstLoadTime : "+firstLoadTime+" <> repeatLoadTime : "+repeatLoadTime);
 		}catch(Throwable t) {
 			 t.printStackTrace();
 		}
