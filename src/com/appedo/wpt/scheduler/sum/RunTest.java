@@ -221,10 +221,11 @@ public class RunTest extends Thread {
 												for (int i = 0; i < numSteps; i++) {
 													if(jaFvStep.getJSONObject(i).has("results") && jaFvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
 														
+														firstLoadTime = firstLoadTime + jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
+														
 														if(jaFvStep.getJSONObject(i).getJSONObject("results").getInt("result") > 200) {
 															isDowntime = true;
 														}else {
-															firstLoadTime = firstLoadTime + jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
 															
 															TTFB = TTFB + (jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("TTFB")/1000);
 															render = render + (jaFvStep.getJSONObject(i).getJSONObject("results").getDouble("render")/1000);
@@ -240,11 +241,11 @@ public class RunTest extends Thread {
 													}
 												}
 											}else if (joFView.has("results")) {
+												firstLoadTime = joFView.getJSONObject("results").getDouble("loadTime");
+												
 												if(joFView.getJSONObject("results").getInt("result") > 200) {
 													isDowntime = true;
 												}else {
-													firstLoadTime = joFView.getJSONObject("results").getDouble("loadTime");
-													
 													TTFB = (joFView.getJSONObject("results").getDouble("TTFB")/1000);
 													render = (joFView.getJSONObject("results").getDouble("render")/1000);
 													domElements = joFView.getJSONObject("results").getDouble("domElements");
@@ -282,10 +283,10 @@ public class RunTest extends Thread {
 												org.json.JSONArray jaRvStep = joRView.getJSONArray("step");
 												for (int i = 0; i < numSteps; i++) {
 													if(jaRvStep.getJSONObject(i).has("results") && jaRvStep.getJSONObject(i).get("results") instanceof org.json.JSONObject) {
+														repeatLoadTime = repeatLoadTime + jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
 														if(jaRvStep.getJSONObject(i).getJSONObject("results").getInt("result") > 200) {
 															isDowntime = true;
 														}else {
-															repeatLoadTime = repeatLoadTime + jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("loadTime");
 															
 															rTTFB = rTTFB + (jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("TTFB")/1000);
 															rrender = rrender + (jaRvStep.getJSONObject(i).getJSONObject("results").getDouble("render")/1000);
@@ -301,10 +302,10 @@ public class RunTest extends Thread {
 													}
 												}
 											}else if(joRView.has("results")) {
+												repeatLoadTime = joRView.getJSONObject("results").getDouble("loadTime");
 												if(joRView.getJSONObject("results").getInt("result") > 200) {
 													isDowntime = true;
 												}else {
-													repeatLoadTime = joRView.getJSONObject("results").getDouble("loadTime");
 													
 													rTTFB = (joRView.getJSONObject("results").getDouble("TTFB")/1000);
 													rrender = (joRView.getJSONObject("results").getDouble("render")/1000);
@@ -351,7 +352,7 @@ public class RunTest extends Thread {
 								joSLA.put("is_Down", isDowntime);
 								
 								if( (testBean.getThresholdValue() > 0 && firstLoadTime > (testBean.getThresholdValue()*1000)) || isDowntime ) {
-									joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue()*1000)?"CRITICAL":"WARNING");
+									joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue())?"CRITICAL":"WARNING");
 									LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
 									client = new HttpClient();
 									method = new PostMethod(Constants.APPEDO_SLA_COLLECTOR);
