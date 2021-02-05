@@ -4,11 +4,11 @@
   
 	<context-param>
 		<param-name>NewMIDlet-Version</param-name>
-		<param-value>3.0.033</param-value>
+		<param-value>3.0.034</param-value>
 	</context-param>
 	<context-param>
 		<param-name>VersionLastUpdate</param-name>
-		<param-value>2021-01-31 10:45</param-value>
+		<param-value>2021-02-05 17:00</param-value>
 	</context-param>
   
   
