@@ -119,7 +119,7 @@ public class SUMManager {
 			
 			if( isDowntime || (joSLA.getInt("threshold_set_value") > 0 && firstLoadTime > (joSLA.getInt("threshold_set_value")*1000)) ) {
 				joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
-				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value")*1000)?"CRITICAL":"WARNING");
+				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value"))?"CRITICAL":"WARNING");
 				joSLA.put("location", location);
 				joSLA.put("is_Down", isDowntime);
 				

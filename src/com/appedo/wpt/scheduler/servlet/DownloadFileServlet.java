@@ -76,9 +76,9 @@ public class DownloadFileServlet extends HttpServlet {
 			// long lLogId = 0;
 			String logId = "0";
 			
-			if(oaReturn[1] != null){
-				logId = ((SUMAuditLogBean)oaReturn[1]).getCreatedOn();
-			}
+//			if(oaReturn[1] != null){
+//				logId = ((SUMAuditLogBean)oaReturn[1]).getCreatedOn();
+//			}
 			
 			// no Test is available in queue. So ask agent to wait for some more time.
 			if( sumTestBean == null ){
