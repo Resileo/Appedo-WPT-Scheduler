@@ -2,6 +2,7 @@ package com.appedo.wpt.scheduler.manager;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -118,6 +119,7 @@ public class SUMManager {
 			JSONObject joSLA = sumdbi.getTestIdDetails(con, test_id);
 			
 			if( isDowntime || (joSLA.getInt("threshold_set_value") > 0 && firstLoadTime > (joSLA.getInt("threshold_set_value")*1000)) ) {
+				joSLA.put("appedoReceivedOn", new Date().getTime());
 				joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
 				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value"))?"CRITICAL":"WARNING");
 				joSLA.put("location", location);
@@ -153,6 +155,7 @@ public class SUMManager {
 			joSLA.put("type", "Configured Site is Down");
 			joSLA.put("is_Down", true);
 			joSLA.put("custom_key", custom_key);
+			joSLA.put("appedoReceivedOn", new Date().getTime());
 			
 			LogManager.infoLog("json sla for SUM TestId: "+joSLA.getString("userid")+" <> SLA Alert :: "+joSLA.toString());
 			
