@@ -153,7 +153,7 @@ public class SUMDBI {
 		StringBuilder sbQuery = new StringBuilder();
 		try {
 			joSumDetails = new JSONObject();
-			sbQuery .append("SELECT test_id, sla_id, user_id, warning, error FROM ")
+			sbQuery .append("SELECT test_id, sla_id, sla_sum_id, user_id, warning, error, rm_min_breach_count FROM ")
 					.append("sum_test_master stm JOIN so_sla_sum sss ON stm.test_id = sss.sum_test_id ")
 					.append("WHERE stm.test_id = ").append(test_id);
 			
@@ -165,6 +165,8 @@ public class SUMDBI {
 				joSumDetails.put("threshold_set_value", rs.getString("warning"));
 				joSumDetails.put("err_set_value", rs.getString("error"));
 				joSumDetails.put("sla_id", rs.getString("sla_id"));
+				joSumDetails.put("sla_sum_id", rs.getString("sla_sum_id"));
+				joSumDetails.put("min_breach_count", rs.getString("rm_min_breach_count"));
 			}
 		}catch (Exception ex) {
 			LogManager.errorLog(ex);

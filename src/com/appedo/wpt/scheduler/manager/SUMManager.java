@@ -107,7 +107,7 @@ public class SUMManager {
 	}
 
 
-	public void sendSlaAlert(long test_id, boolean isDowntime, double firstLoadTime, String location) throws Exception {
+	public void sendSlaAlert(long test_id, boolean isDowntime, double firstLoadTime, String location, long har_id) throws Exception {
 		Connection con = null;
 		SUMDBI sumdbi = null;
 		HttpClient client = null;
@@ -124,6 +124,7 @@ public class SUMManager {
 				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value"))?"CRITICAL":"WARNING");
 				joSLA.put("location", location);
 				joSLA.put("is_Down", isDowntime);
+				joSLA.put("har_id", har_id);
 				
 				LogManager.infoLog("json sla for SUM TestId: "+joSLA.getString("userid")+" <> SLA Alert :: "+joSLA.toString());
 				
