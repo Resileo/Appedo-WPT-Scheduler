@@ -137,12 +137,22 @@ public class TransactionResult extends HttpServlet {
 								}
 								
 								if(joData.has("run") && joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").has("custom")) {
-									jaCustomKey = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getJSONArray("custom");
-									for(int i =0; i<jaCustomKey.length(); i++) {
-										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getInt(jaCustomKey.getString(i));
+									org.json.JSONObject joCustom = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getJSONObject("custom");
+									
+									if(!(joCustom.get("value") instanceof org.json.JSONArray)) {
+										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getInt(joCustom.getString("value"));
 										if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
 											isCustomDowntime = true;
-											jaCustomAlertKeys.put(jaCustomKey.getString(i));
+											jaCustomAlertKeys.put(joCustom.getString("value"));
+										}
+									}else {
+										jaCustomKey = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getJSONObject("custom").getJSONArray("value");
+										for(int i =0; i<jaCustomKey.length(); i++) {
+											float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONArray("step").getJSONObject(0).getJSONObject("results").getInt(jaCustomKey.getString(i));
+											if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
+												isCustomDowntime = true;
+												jaCustomAlertKeys.put(jaCustomKey.getString(i));
+											}
 										}
 									}
 								}
@@ -161,15 +171,24 @@ public class TransactionResult extends HttpServlet {
 								}
 								
 								if(joData.has("run") && joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").has("custom")) {
-									jaCustomKey = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getJSONArray("custom");
-									for(int i =0; i<jaCustomKey.length(); i++) {
-										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getInt(jaCustomKey.getString(i));
+									org.json.JSONObject joCustom = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getJSONObject("custom");
+									
+									if(!(joCustom.get("value") instanceof org.json.JSONArray)) {
+										float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getInt(joCustom.getString("value"));
 										if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
 											isCustomDowntime = true;
-											jaCustomAlertKeys.put(jaCustomKey.getString(i));
+											jaCustomAlertKeys.put(joCustom.getString("value"));
 										}
-									}
-									 
+									}else {
+										jaCustomKey = joCustom.getJSONArray("value");
+										for(int i =0; i<jaCustomKey.length(); i++) {
+											float value = joData.getJSONObject("run").getJSONObject("firstView").getJSONObject("results").getInt(jaCustomKey.getString(i));
+											if(value == Constants.TRANSACTION_CUSTOM_DOWN_VALUE) {
+												isCustomDowntime = true;
+												jaCustomAlertKeys.put(jaCustomKey.getString(i));
+											}
+										}
+									}									 
 								}
 								
 							} else if( joData.has("average") ){
@@ -193,7 +212,7 @@ public class TransactionResult extends HttpServlet {
 							sumManager.updateHarTable(test_id, jores.getInt("statusCode"), jores.getString("statusText"), wpt_test_code, ((Double)firstLoadTime).intValue(), ((Double)repeatLoadTime).intValue() );
 								
 							// TODO: Send SLA Alert for Threshold value & Down Time
-							sumManager.sendSlaAlert(test_id, isDowntime, firstLoadTime, location);
+							sumManager.sendSlaAlert(test_id, isDowntime, firstLoadTime, location, harId);
 							
 							// TODO: send Transaction custom SLA Alert.
 							if(isCustomDowntime && jaCustomAlertKeys.length() > 0) {
