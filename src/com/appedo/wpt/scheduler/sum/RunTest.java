@@ -351,7 +351,7 @@ public class RunTest extends Thread {
 								joSLA.put("location", strLocation.split(":")[0]);
 								joSLA.put("is_Down", isDowntime);
 								
-								if( (testBean.getThresholdValue() > 0 && firstLoadTime > (testBean.getThresholdValue()*1000)) || isDowntime ) {
+								if( (testBean.getThresholdValue() > 0 && firstLoadTime > testBean.getThresholdValue()) || isDowntime ) {
 									joSLA.put("breached_severity", firstLoadTime > (testBean.getErrorValue())?"CRITICAL":"WARNING");
 									LogManager.infoLog("json sla for SUM TestId: "+testBean.getTestId()+" <> runTestCode: "+runTestCode+" <> SLA Alert :: "+joSLA.toString());
 									client = new HttpClient();

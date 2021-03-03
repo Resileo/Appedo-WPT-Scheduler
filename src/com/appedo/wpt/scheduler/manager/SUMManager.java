@@ -118,7 +118,7 @@ public class SUMManager {
 			sumdbi = new SUMDBI();
 			JSONObject joSLA = sumdbi.getTestIdDetails(con, test_id);
 			
-			if( isDowntime || (joSLA.getInt("threshold_set_value") > 0 && firstLoadTime > (joSLA.getInt("threshold_set_value")*1000)) ) {
+			if( isDowntime || (joSLA.getInt("threshold_set_value") > 0 && firstLoadTime > joSLA.getInt("threshold_set_value")) ) {
 				joSLA.put("appedoReceivedOn", new Date().getTime());
 				joSLA.put("received_value", String.format( "%.2f", (firstLoadTime/1000)) );
 				joSLA.put("breached_severity", firstLoadTime > (joSLA.getInt("err_set_value"))?"CRITICAL":"WARNING");

@@ -17,6 +17,10 @@ import com.appedo.wpt.scheduler.manager.SUMManager;
 
 public class AddEditSUMTest extends HttpServlet {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	Connection con = null;
 	public AddEditSUMTest() {
 		super();
